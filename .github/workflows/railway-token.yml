@@ -1,0 +1,19 @@
+name: Railway Token Helper
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Railway browserless login
+        run: |
+          echo "Starting Railway browserless login..."
+          railway login --browserless 2>&1 | tee /tmp/railway_output.txt || true
+          echo "=== OUTPUT ==="
+          cat /tmp/railway_output.txt || true
+        timeout-minutes: 2
