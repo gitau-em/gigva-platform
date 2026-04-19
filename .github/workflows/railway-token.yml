@@ -1,81 +1,109 @@
-name: Railway Deploy
+name: Railway Auth and Deploy
 
 on:
   workflow_dispatch:
     inputs:
-      github_password:
-        description: 'GitHub password for OAuth (leave empty to skip)'
+      wait_minutes:
+        description: 'Minutes to wait for Railway login approval (default: 5)'
         required: false
+        default: '5'
 
 jobs:
-  setup-railway:
+  authenticate:
     runs-on: ubuntu-latest
+    outputs:
+      railway_token: ${{ steps.get_token.outputs.RAILWAY_TOKEN }}
+    steps:
+      - name: Create Railway login session
+        id: login_session
+        run: |
+          RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
+            -H 'Content-Type: application/json' \
+            -H 'Origin: https://railway.com' \
+            -d '{"query":"mutation { loginSessionCreate { code secret } }"}')
+          echo "Raw response: $RESPONSE"
+          
+          CODE=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionCreate',{}).get('code','NOT_FOUND'))")
+          SECRET=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionCreate',{}).get('secret','NOT_FOUND'))")
+          
+          echo "Login code: $CODE"
+          echo "::notice title=RAILWAY LOGIN REQUIRED::Please visit: https://railway.com/cli-login?d=$CODE"
+          echo ""
+          echo "================================================"
+          echo "  RAILWAY LOGIN URL:"
+          echo "  https://railway.com/cli-login?d=$CODE"
+          echo "================================================"
+          echo ""
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+          echo "secret=$SECRET" >> $GITHUB_OUTPUT
+          
+      - name: Wait for Railway login approval
+        run: |
+          WAIT_MINS=${{ github.event.inputs.wait_minutes || 5 }}
+          WAIT_SECS=$((WAIT_MINS * 60))
+          echo "Waiting ${WAIT_MINS} minutes (${WAIT_SECS}s) for you to approve the login at Railway..."
+          echo "URL: https://railway.com/cli-login?d=${{ steps.login_session.outputs.code }}"
+          sleep $WAIT_SECS
+          
+      - name: Consume Railway session to get token
+        id: get_token
+        run: |
+          CODE="${{ steps.login_session.outputs.code }}"
+          SECRET="${{ steps.login_session.outputs.secret }}"
+          
+          RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
+            -H 'Content-Type: application/json' \
+            -H 'Origin: https://railway.com' \
+            -d "{\"query\":\"mutation consumeSession(\$code: String!, \$secret: String!) { loginSessionConsume(code: \$code, secret: \$secret) }\",\"variables\":{\"code\":\"$CODE\",\"secret\":\"$SECRET\"}}")
+          
+          echo "Consume response: $RESPONSE"
+          
+          TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionConsume',''))")
+          
+          if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ]; then
+            echo "::add-mask::$TOKEN"
+            echo "RAILWAY_TOKEN=$TOKEN" >> $GITHUB_OUTPUT
+            echo "SUCCESS: Railway token obtained!"
+          else
+            echo "ERROR: Failed to get token. Did you approve the login?"
+            echo "Full response: $RESPONSE"
+            exit 1
+          fi
+
+  setup-and-deploy:
+    needs: authenticate
+    runs-on: ubuntu-latest
+    env:
+      RAILWAY_TOKEN: ${{ needs.authenticate.outputs.railway_token }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Install dependencies and build
-        run: npm install
-
-      - name: Install Railway CLI and get token via API
-        run: |
-          npm install -g @railway/cli
-          
-          # Try Railway GraphQL API with service account approach
-          # Check if we can call their API
-          echo "Testing Railway API connectivity..."
-          HEALTH=$(curl -s -o /dev/null -w "%{http_code}" https://backboard.railway.app/health || echo "unreachable")
-          echo "Railway API health: $HEALTH"
-          
-          # Try the loginSession mutation (creates temp session)
-          SESSION_RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
-            -H 'Content-Type: application/json' \
-            -H 'Origin: https://railway.com' \
-            -d '{"query":"mutation { createLoginSession { code secret } }"}')
-          echo "Session response: $SESSION_RESPONSE"
-          
-          # Extract code and secret
-          CODE=$(echo "$SESSION_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('createLoginSession',{}).get('code',''))" 2>/dev/null || echo "")
-          SECRET=$(echo "$SESSION_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('createLoginSession',{}).get('secret',''))" 2>/dev/null || echo "")
-          
-          echo "Login code: $CODE"
-          echo "::notice::RAILWAY_LOGIN_URL=https://railway.com/cli-login?d=$CODE"
-          echo "Login URL to authorize: https://railway.com/cli-login?d=$CODE"
-          echo "SECRET=$SECRET" >> $GITHUB_OUTPUT
-          echo "CODE=$CODE" >> $GITHUB_OUTPUT
-        id: get_session
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
         
-      - name: Wait for manual authorization
+      - name: Verify Railway login
+        run: railway whoami
+        
+      - name: Create Railway project and deploy
         run: |
-          echo "::warning::Please visit the Railway login URL shown above to authorize!"
-          echo "Waiting 120 seconds for authorization..."
-          sleep 120
-          
-      - name: Get Railway token after authorization
-        run: |
-          SECRET="${{ steps.get_session.outputs.SECRET }}"
-          CODE="${{ steps.get_session.outputs.CODE }}"
-          
-          # Check if session was authorized  
-          TOKEN_RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
+          # Create new project
+          PROJECT_RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
             -H 'Content-Type: application/json' \
             -H 'Origin: https://railway.com' \
-            -d "{\"query\":\"mutation consumeLoginSession($code: String!, $secret: String!) { consumeLoginSession(code: $code, secret: $secret) }\",\"variables\":{\"code\":\"$CODE\",\"secret\":\"$SECRET\"}}")
-          echo "Token response: $TOKEN_RESPONSE"
+            -H "Authorization: Bearer $RAILWAY_TOKEN" \
+            -d '{"query":"mutation { projectCreate(input: { name: \"Gigva Platform\" }) { id name } }"}')
+          echo "Project: $PROJECT_RESPONSE"
           
-          RAILWAY_TOKEN=$(echo "$TOKEN_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('consumeLoginSession',''))" 2>/dev/null || echo "")
-          echo "::add-mask::$RAILWAY_TOKEN"
-          echo "RAILWAY_TOKEN=$RAILWAY_TOKEN" >> $GITHUB_ENV
+          PROJECT_ID=$(echo "$PROJECT_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('projectCreate',{}).get('id',''))")
+          echo "Project ID: $PROJECT_ID"
           
-          if [ -n "$RAILWAY_TOKEN" ]; then
-            echo "::notice::Got Railway token successfully!"
-            # Test it
-            railway whoami 2>&1 || echo "Token test done"
-          else
-            echo "::error::Failed to get Railway token"
+          if [ -n "$PROJECT_ID" ]; then
+            echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+            echo "::notice::Created Railway project: $PROJECT_ID"
           fi
