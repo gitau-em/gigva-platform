@@ -1,0 +1,32 @@
+{
+  "name": "gigva-kenya",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:init": "node lib/db-init.js"
+  },
+  "dependencies": {
+    "next": "14.2.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^9.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "validator": "^13.11.0",
+    "zod": "^3.23.4",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.372.0",
+    "nodemailer": "^6.9.13"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.3"
+  }
+}
