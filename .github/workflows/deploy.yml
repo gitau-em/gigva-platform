@@ -1,4 +1,4 @@
-name: Deploy to Railway
+name: CI Build Check
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
               workflow_dispatch:
 
               jobs:
-                deploy:
+                build:
                     runs-on: ubuntu-latest
                         steps:
                               - name: Checkout code
                                       uses: actions/checkout@v4
 
-                                            - name: Install Node.js
+                                            - name: Setup Node.js
                                                     uses: actions/setup-node@v4
                                                             with:
                                                                       node-version: '18'
@@ -25,17 +25,7 @@ on:
                                                                                                     - name: Build application
                                                                                                             run: npm run build
                                                                                                                     env:
-                                                                                                                              JWT_SECRET: ${{ secrets.JWT_SECRET }}
-                                                                                                                                        SMTP_HOST: ${{ secrets.SMTP_HOST }}
-                                                                                                                                                  SMTP_PORT: ${{ secrets.SMTP_PORT }}
-                                                                                                                                                            SMTP_USER: ${{ secrets.SMTP_USER }}
-                                                                                                                                                                      SMTP_PASS: ${{ secrets.SMTP_PASS }}
-                                                                                                                                                                                NEXT_PUBLIC_TAWK_PROPERTY_ID: ${{ secrets.NEXT_PUBLIC_TAWK_PROPERTY_ID }}
-                                                                                                                                                                                          NEXT_PUBLIC_TAWK_WIDGET_ID: ${{ secrets.NEXT_PUBLIC_TAWK_WIDGET_ID }}
-                                                                                                                                                                                                    NODE_ENV: production
-                                                                                                                                                                                                    
-                                                                                                                                                                                                          - name: Deploy to Railway
-                                                                                                                                                                                                                  uses: bervProject/railway-deploy@main
-                                                                                                                                                                                                                          with:
-                                                                                                                                                                                                                                    railway_token: ${{ secrets.RAILWAY_TOKEN }}
-                                                                                                                                                                                                                                              service: gigva-platform
+                                                                                                                              JWT_SECRET: build_placeholder_secret_64bytes_long_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                                                                                                                                        NEXT_PUBLIC_TAWK_PROPERTY_ID: 69e4940849bb761c347cdbc7
+                                                                                                                                                  NEXT_PUBLIC_TAWK_WIDGET_ID: 1jmie4h09
+                                                                                                                                                            NODE_ENV: production
