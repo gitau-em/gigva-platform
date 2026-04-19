@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       wait_minutes:
-        description: 'Minutes to wait for Railway login approval (default: 5)'
+        description: Minutes to wait for Railway login approval
         required: false
-        default: '5'
+        default: "5"
 
 jobs:
   authenticate:
@@ -18,59 +18,47 @@ jobs:
         id: login_session
         run: |
           RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
-            -H 'Content-Type: application/json' \
-            -H 'Origin: https://railway.com' \
-            -d '{"query":"mutation { loginSessionCreate { code secret } }"}')
+            -H "Content-Type: application/json" \
+            -H "Origin: https://railway.com" \
+            -d '{"query":"mutation { loginSessionCreate }"}')
           echo "Raw response: $RESPONSE"
-          
-          CODE=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionCreate',{}).get('code','NOT_FOUND'))")
-          SECRET=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionCreate',{}).get('secret','NOT_FOUND'))")
-          
-          echo "Login code: $CODE"
-          echo "::notice title=RAILWAY LOGIN REQUIRED::Please visit: https://railway.com/cli-login?d=$CODE"
+          CODE=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionCreate',''))")
+          echo "code=$CODE" >> $GITHUB_OUTPUT
+          LOGIN_URL="https://railway.com/cli-login?d=$CODE"
           echo ""
           echo "================================================"
           echo "  RAILWAY LOGIN URL:"
-          echo "  https://railway.com/cli-login?d=$CODE"
+          echo "  $LOGIN_URL"
           echo "================================================"
-          echo ""
-          echo "code=$CODE" >> $GITHUB_OUTPUT
-          echo "secret=$SECRET" >> $GITHUB_OUTPUT
-          
+          echo "::notice title=RAILWAY LOGIN REQUIRED::$LOGIN_URL"
+
       - name: Wait for Railway login approval
         run: |
-          WAIT_MINS=${{ github.event.inputs.wait_minutes || 5 }}
-          WAIT_SECS=$((WAIT_MINS * 60))
-          echo "Waiting ${WAIT_MINS} minutes (${WAIT_SECS}s) for you to approve the login at Railway..."
-          echo "URL: https://railway.com/cli-login?d=${{ steps.login_session.outputs.code }}"
-          sleep $WAIT_SECS
-          
+          WAIT_MINS=${{ github.event.inputs.wait_minutes }}
+          echo "Waiting ${WAIT_MINS} minutes for login..."
+          sleep $((WAIT_MINS * 60))
+          echo "URL was: https://railway.com/cli-login?d=${{ steps.login_session.outputs.code }}"
+
       - name: Consume Railway session to get token
         id: get_token
         run: |
           CODE="${{ steps.login_session.outputs.code }}"
-          SECRET="${{ steps.login_session.outputs.secret }}"
-          
           RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
-            -H 'Content-Type: application/json' \
-            -H 'Origin: https://railway.com' \
-            -d "{\"query\":\"mutation consumeSession(\$code: String!, \$secret: String!) { loginSessionConsume(code: \$code, secret: \$secret) }\",\"variables\":{\"code\":\"$CODE\",\"secret\":\"$SECRET\"}}")
-          
+            -H "Content-Type: application/json" \
+            -H "Origin: https://railway.com" \
+            -d "{\"query\":\"mutation { loginSessionConsume(code: \\\"${CODE}\\\") }\"}")
           echo "Consume response: $RESPONSE"
-          
-          TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionConsume',''))")
-          
-          if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ]; then
+          TOKEN=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('loginSessionConsume',''))" 2>/dev/null)
+          if [ -n "$TOKEN" ] && [ "$TOKEN" != "None" ] && [ "$TOKEN" != "null" ]; then
             echo "::add-mask::$TOKEN"
             echo "RAILWAY_TOKEN=$TOKEN" >> $GITHUB_OUTPUT
-            echo "SUCCESS: Railway token obtained!"
+            echo "SUCCESS: Got Railway token!"
           else
-            echo "ERROR: Failed to get token. Did you approve the login?"
-            echo "Full response: $RESPONSE"
+            echo "Failed response: $RESPONSE"
             exit 1
           fi
 
-  setup-and-deploy:
+  setup-railway:
     needs: authenticate
     runs-on: ubuntu-latest
     env:
@@ -78,32 +66,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli
-        
-      - name: Verify Railway login
-        run: railway whoami
-        
-      - name: Create Railway project and deploy
+
+      - name: Verify login and create project
         run: |
-          # Create new project
-          PROJECT_RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
-            -H 'Content-Type: application/json' \
-            -H 'Origin: https://railway.com' \
+          railway whoami
+          RESPONSE=$(curl -s -X POST https://backboard.railway.app/graphql/v2 \
+            -H "Content-Type: application/json" \
+            -H "Origin: https://railway.com" \
             -H "Authorization: Bearer $RAILWAY_TOKEN" \
             -d '{"query":"mutation { projectCreate(input: { name: \"Gigva Platform\" }) { id name } }"}')
-          echo "Project: $PROJECT_RESPONSE"
-          
-          PROJECT_ID=$(echo "$PROJECT_RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('projectCreate',{}).get('id',''))")
+          echo "Project: $RESPONSE"
+          PROJECT_ID=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('data',{}).get('projectCreate',{}).get('id',''))" 2>/dev/null)
           echo "Project ID: $PROJECT_ID"
-          
-          if [ -n "$PROJECT_ID" ]; then
-            echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
-            echo "::notice::Created Railway project: $PROJECT_ID"
-          fi
+          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
