@@ -1,0 +1,25 @@
+name: Google Workspace Setup
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'create-users'
+
+jobs:
+  setup-google-workspace:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Google Workspace Users
+        run: |
+          # Check if we have OAuth token
+          echo "This workflow requires Google OAuth2 setup"
+          echo "For creating users, we need Admin SDK credentials"
+          echo ""
+          echo "Users to create:"
+          echo "  1. noreply@gigva.co.ke"
+          echo "  2. ceo@gigva.co.ke (Mwangi Kamau)"
+          echo "  3. cto@gigva.co.ke (Aisha Waweru)"
+          echo "  4. samuel.otieno@gigva.co.ke"
+          echo "  5. edward.gitau@gigva.co.ke"
