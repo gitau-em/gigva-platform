@@ -1,37 +1,36 @@
-name: Railway API Introspect
+name: Railway Login Signature Check
 
 on:
   workflow_dispatch:
 
 jobs:
-  introspect:
+  check:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Introspect Railway GraphQL API mutations
+      - name: Check Railway loginSessionCreate and loginSessionConsume signatures
         run: |
-          # Try GraphQL introspection
+          # Get full type info for loginSessionCreate
           curl -s -X POST https://backboard.railway.app/graphql/v2 \
             -H 'Content-Type: application/json' \
             -H 'Origin: https://railway.com' \
-            -d '{"query":"{ __schema { mutationType { fields { name } } } }"}' > /tmp/introspect.json
-          cat /tmp/introspect.json | python3 -c "
-          import json, sys
-          data = json.load(sys.stdin)
-          mutations = data.get('data',{}).get('__schema',{}).get('mutationType',{}).get('fields',[])
-          auth_mutations = [m['name'] for m in mutations if any(kw in m['name'].lower() for kw in ['login','session','token','auth','register'])]
-          print('Auth mutations:', auth_mutations)
-          print('Total:', len(mutations))
-          "
+            -d '{"query":"{ __schema { mutationType { fields { name args { name type { name kind ofType { name kind } } } type { name kind ofType { name kind } } } } } }"}' > /tmp/full_schema.json
           
-      - name: Check Railway CLI source for login mutation
-        run: |
-          RAILWAY_PATH=$(npm root -g)/@railway/cli
-          echo "CLI path: $RAILWAY_PATH"
-          find $RAILWAY_PATH/dist -name "*.js" -exec grep -l "loginSession\|LoginSession\|AuthSession" {} \; 2>/dev/null | head -5
-          find $RAILWAY_PATH/dist -name "*.js" 2>/dev/null | xargs grep -l "mutation.*[Ll]ogin" 2>/dev/null | head -3 | while read f; do
-            echo "=== $f ==="
-            grep -A3 "mutation.*[Ll]ogin\|[Ll]ogin.*mutation" "$f" | head -20
-          done
+          python3 << 'PYEOF'
+import json
+with open('/tmp/full_schema.json') as f:
+    data = json.load(f)
+
+fields = data.get('data',{}).get('__schema',{}).get('mutationType',{}).get('fields',[])
+targets = ['loginSessionCreate', 'loginSessionConsume', 'loginSessionAuth', 'loginSessionVerify', 'apiTokenCreate']
+
+for field in fields:
+    if field['name'] in targets:
+        args_info = []
+        for arg in field.get('args', []):
+            t = arg['type']
+            type_str = t.get('name') or f"{t.get('kind')}({t.get('ofType',{}).get('name','')})"
+            args_info.append(f"{arg['name']}: {type_str}")
+        ret_type = field['type']
+        ret_str = ret_type.get('name') or f"{ret_type.get('kind')}({ret_type.get('ofType',{}).get('name','')})"
+        print(f"  {field['name']}({', '.join(args_info)}) -> {ret_str}")
+PYEOF
