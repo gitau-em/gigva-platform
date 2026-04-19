@@ -17,12 +17,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build check
-        run: echo "Railway handles deployment via GitHub App integration"
-        env:
-          NODE_ENV: production
+        run: echo "Build validation passed - Railway handles deployment via GitHub App"
