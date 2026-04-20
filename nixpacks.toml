@@ -5,15 +5,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["npm install --legacy-peer-deps"]
 
 [phases.build]
-cmds = [
-  "npm run build",
-  "cp -r public .next/standalone/public",
-  "cp -r .next/static .next/standalone/.next/static",
-  "cp -r node_modules/better-sqlite3 .next/standalone/node_modules/better-sqlite3",
-  "cp -r node_modules/bcrypt .next/standalone/node_modules/bcrypt",
-  "[ -d node_modules/node-gyp-build ] && cp -r node_modules/node-gyp-build .next/standalone/node_modules/node-gyp-build || true",
-  "[ -d node_modules/bindings ] && cp -r node_modules/bindings .next/standalone/node_modules/bindings || true"
-]
+cmds = ["npm run build"]
 
 [start]
-cmd = "node .next/standalone/server.js"
+cmd = "npm start"
