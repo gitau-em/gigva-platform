@@ -6,14 +6,12 @@ cmds = [
   "npm run build",
     "cp -r public .next/standalone/public",
       "cp -r .next/static .next/standalone/.next/static",
-        "cp -r node_modules/.bin .next/standalone/node_modules/.bin",
-          "cp -r node_modules/better-sqlite3 .next/standalone/node_modules/better-sqlite3",
-            "cp -r node_modules/bcrypt .next/standalone/node_modules/bcrypt",
-              "cp -r node_modules/node-gyp-build .next/standalone/node_modules/node-gyp-build"
-              ]
+        "cp -r node_modules/better-sqlite3 .next/standalone/node_modules/better-sqlite3",
+          "cp -r node_modules/bcrypt .next/standalone/node_modules/bcrypt"
+          ]
 
-              [phases.setup]
-              nixPkgs = ["nodejs_20"]
+          [phases.setup]
+          nixPkgs = ["nodejs_20"]
 
-              [start]
-              cmd = "node .next/standalone/server.js"
+          [start]
+          cmd = "node .next/standalone/server.js"
