@@ -694,6 +694,9 @@ function InboxTab({ token, user }) {
     const [selected, setSelected]   = useState(null)
     const [loading,  setLoading]    = useState(true)
     const [search,   setSearch]     = useState('')
+    const [replying,     setReplying]     = useState(false)
+    const [replyText,    setReplyText]    = useState('')
+    const [replyStatus,  setReplyStatus]  = useState(null)
 
     const h = { Authorization: `Bearer ${token}` }
 
@@ -727,6 +730,31 @@ function InboxTab({ token, user }) {
                   setMessages(prev => prev.filter(m => m.id !== id))
                   if (selected?.id === id) setSelected(null)
           })
+    }
+
+    async function sendReply(messageId, replyText) {
+      if (!replyText.trim()) return
+      setReplyStatus('sending')
+      try {
+        const res = await fetch('/api/admin/inbox/reply', {
+          method: 'POST',
+          headers: { ...h, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messageId, replyText }),
+        })
+        const data = await res.json()
+        if (data.ok) {
+          setReplyStatus('sent')
+          setReplyText('')
+          setReplying(false)
+          setMessages(prev => prev.map(m => m.id === messageId ? { ...m, replied: 1 } : m))
+          if (selected?.id === messageId) setSelected(prev => ({ ...prev, replied: 1 }))
+          setTimeout(() => setReplyStatus(null), 3000)
+        } else {
+          setReplyStatus('error: ' + (data.msg || 'Failed to send'))
+        }
+      } catch (err) {
+        setReplyStatus('error: ' + err.message)
+      }
     }
 
     function openMsg(msg) {
@@ -824,6 +852,11 @@ function InboxTab({ token, user }) {
 </p>
                     <p className="text-xs text-slate-400 mt-0.5">To: {selected.to_email} · {fmtDate(selected.created_at)}</p>
   </div>
+                  <button onClick={() => setReplying(r => !r)}
+                    className="flex items-center gap-1 p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-400 hover:text-indigo-600 transition-colors"
+                    title="Reply to message">
+                    <MessageSquareReply size={15} />
+                  </button>
                   <button onClick={() => deleteMsg(selected.id)}
                     className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
                     title="Delete message">
@@ -838,6 +871,41 @@ function InboxTab({ token, user }) {
                                         <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">{selected.body_text}</pre>
                   )}
 </div>
+                {/* Reply Form */}
+                {replying && (
+                  <div className="border-t border-indigo-100 pt-4 mt-4">
+                    <p className="text-xs font-medium text-slate-500 mb-2">
+                      Replying to: <span className="text-indigo-600">{selected.from_email}</span>
+                    </p>
+                    <textarea
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value)}
+                      rows={4}
+                      placeholder="Type your reply..."
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                    />
+                    <div className="flex items-center justify-between mt-2">
+                      <div>
+                        {replyStatus && (
+                          <span className={'text-xs ' + (replyStatus === 'sent' ? 'text-green-600' : replyStatus === 'sending' ? 'text-slate-400' : 'text-red-500')}>
+                            {replyStatus === 'sent' ? 'Reply sent!' : replyStatus === 'sending' ? 'Sending...' : replyStatus}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setReplying(false); setReplyText(''); setReplyStatus(null) }}
+                          className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                          Cancel
+                        </button>
+                        <button onClick={() => sendReply(selected.id, replyText)}
+                          disabled={!replyText.trim() || replyStatus === 'sending'}
+                          className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1">
+                          <MessageSquareReply size={12} /> Send Reply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
   </div>
             ) : (
                             <div className="flex flex-col items-center justify-center h-64 text-slate-400">
