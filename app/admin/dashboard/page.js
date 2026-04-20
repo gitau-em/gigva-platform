@@ -688,6 +688,170 @@ function StatCard({ icon: Icon, label, value, color }) {
   )
 }
 
+// ── Inbox Tab ────────────────────────────────────────────────────────────────
+function InboxTab({ token, user }) {
+    const [messages, setMessages]   = useState([])
+    const [selected, setSelected]   = useState(null)
+    const [loading,  setLoading]    = useState(true)
+    const [search,   setSearch]     = useState('')
+
+    const h = { Authorization: `Bearer ${token}` }
+
+    const load = useCallback(() => {
+          setLoading(true)
+          fetch('/api/admin/inbox', { headers: h })
+            .then(r => r.json())
+            .then(d => { setMessages(d.messages || []); setLoading(false) })
+            .catch(() => setLoading(false))
+    }, [token])
+
+    useEffect(() => { load() }, [load])
+
+    function markRead(msg) {
+          if (msg.is_read) return
+          fetch('/api/admin/inbox', {
+                  method: 'PATCH',
+                  headers: { ...h, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: msg.id, is_read: 1 }),
+          }).then(() => {
+                  setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, is_read: 1 } : m))
+          })
+    }
+
+    function deleteMsg(id) {
+          fetch('/api/admin/inbox', {
+                  method: 'DELETE',
+                  headers: { ...h, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id }),
+          }).then(() => {
+                  setMessages(prev => prev.filter(m => m.id !== id))
+                  if (selected?.id === id) setSelected(null)
+          })
+    }
+
+    function openMsg(msg) {
+          setSelected(msg)
+          markRead(msg)
+    }
+
+    const filtered = messages.filter(m => {
+          if (!search) return true
+          const q = search.toLowerCase()
+          return m.subject?.toLowerCase().includes(q) ||
+                       m.from_email?.toLowerCase().includes(q) ||
+                       m.from_name?.toLowerCase().includes(q) ||
+                       m.body_text?.toLowerCase().includes(q)
+    })
+
+    const unread = messages.filter(m => !m.is_read).length
+
+    return (
+          <div className="space-y-4">
+    {/* Header */}
+        <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold text-slate-800">Inbox</h2>
+  {unread > 0 && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-xs font-bold">
+  {unread}
+    </span>
+             )}
+            <span className="text-xs text-slate-400">({user?.email})</span>
+  </div>
+        <button onClick={load}
+          className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                      <RefreshCw size={13} /> Refresh
+            </button>
+            </div>
+
+{/* Search */}
+      <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+          type="text" value={search} onChange={e => setSearch(e.target.value)}
+                      placeholder="Search inbox..."
+          className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+            </div>
+
+{loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 size={28} className="animate-spin text-indigo-400" />
+  </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <MailOpen size={36} className="mb-3 opacity-40" />
+            <p className="text-sm">{search ? 'No messages match your search.' : 'Your inbox is empty.'}</p>
+          <p className="text-xs mt-1 text-slate-300">
+              Emails sent to {user?.email} via the portal will appear here.
+  </p>
+  </div>
+       ) : (
+                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+         {/* Message list */}
+           <div className="lg:col-span-1 border border-slate-200 rounded-xl overflow-hidden">
+           {filtered.map(msg => (
+                           <button key={msg.id} onClick={() => openMsg(msg)}
+                className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors
+                                  ${selected?.id === msg.id ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : ''}
+                                                    ${!msg.is_read ? 'bg-blue-50/40' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <p className={`text-sm truncate ${!msg.is_read ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>
+{msg.from_name || msg.from_email}
+</p>
+                    <p className="text-xs text-slate-500 truncate mt-0.5">{msg.subject}</p>
+                    <p className="text-xs text-slate-400 truncate mt-0.5">{msg.body_text?.substring(0, 60)}</p>
+  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-[10px] text-slate-400 whitespace-nowrap">{fmtDate(msg.created_at)}</span>
+{!msg.is_read && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
+  </div>
+  </div>
+  </button>
+             ))}
+</div>
+
+{/* Message detail */}
+          <div className="lg:col-span-2 border border-slate-200 rounded-xl">
+          {selected ? (
+                          <div className="p-5 space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h3 className="font-semibold text-slate-900">{selected.subject}</h3>
+                                <p className="text-sm text-slate-500 mt-0.5">
+                                  From: {selected.from_name ? `${selected.from_name} <${selected.from_email}>` : selected.from_email}
+</p>
+                    <p className="text-xs text-slate-400 mt-0.5">To: {selected.to_email} · {fmtDate(selected.created_at)}</p>
+  </div>
+                  <button onClick={() => deleteMsg(selected.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
+                    title="Delete message">
+                                          <Trash2 size={15} />
+                      </button>
+                      </div>
+                <div className="border-t border-slate-100 pt-4">
+                    {selected.body_html ? (
+                                          <div className="prose prose-sm max-w-none text-slate-700"
+                                            dangerouslySetInnerHTML={{ __html: selected.body_html }} />
+                  ) : (
+                                        <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">{selected.body_text}</pre>
+                  )}
+</div>
+  </div>
+            ) : (
+                            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+                              <MailOpen size={32} className="mb-2 opacity-40" />
+                              <p className="text-sm">Select a message to read</p>
+              </div>
+            )}
+              </div>
+              </div>
+      )}
+        </div>
+  )
+}
+
 // ─── Webmail button ───────────────────────────────────────────────────────────
 function WebmailButton({ email }) {
   const webmailUrl = process.env.NEXT_PUBLIC_WEBMAIL_URL || 'https://mail.google.com'
@@ -713,6 +877,7 @@ const ALL_TABS = [
   { id: 'demos',    label: 'Demo Bookings',       icon: Calendar },
   { id: 'trials',   label: 'Free Trial Requests', icon: Zap      },
   { id: 'users',    label: 'User Management',     icon: Users    },
+  { id: 'inbox',   label: 'Inbox',            icon: MailOpen },
 ]
 
 export default function AdminDashboard() {
@@ -721,7 +886,7 @@ export default function AdminDashboard() {
   const [user, setUser]           = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [tab, setTab]             = useState(null)
-  const [counts, setCounts]       = useState({ messages: 0, demos: 0, trials: 0, users: 0 })
+  const [counts, setCounts]       = useState({ messages: 0, demos: 0, trials: 0, users: 0, inbox: 0  })
 
   // ── Auth check ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -759,12 +924,14 @@ export default function AdminDashboard() {
       user?.is_admin
         ? fetch('/api/admin/users', { headers: h }).then(r => r.json())
         : Promise.resolve({ users: [] }),
-    ]).then(([c, d, tr, u]) => {
+            fetch('/api/admin/inbox',         { headers: h }).then(r => r.json()),
+    ]).then(([c, d, tr, u, ix]) => {
       setCounts({
         messages: c.contacts?.length  ?? 0,
         demos:    d.demos?.length      ?? 0,
         trials:   tr.demos?.length     ?? 0,
         users:    u.users?.length      ?? 0,
+                  inbox:   ix.unread         ?? 0,
       })
     }).catch(() => {})
   }, [token, user])
@@ -792,6 +959,7 @@ export default function AdminDashboard() {
     demos:    counts.demos,
     trials:   counts.trials,
     users:    counts.users,
+            inbox:   counts.inbox,
   })[id] ?? 0
 
   return (
@@ -814,7 +982,10 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <WebmailButton email={user.email} />
+                    <button onClick={() => setTab('inbox')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                                                    <MailOpen size={14} /> My Inbox
+                                    </button>
           <button onClick={handleLogout}
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors font-medium">
             <LogOut size={14} /> Sign out
@@ -835,6 +1006,7 @@ export default function AdminDashboard() {
             <StatCard icon={Mail}     label="Messages"           value={counts.messages} color="text-indigo-600 border-indigo-100" />
             <StatCard icon={Calendar} label="Demo Bookings"       value={counts.demos}    color="text-sky-600 border-sky-100" />
             <StatCard icon={Zap}      label="Trial Requests"      value={counts.trials}   color="text-emerald-600 border-emerald-100" />
+                        <StatCard icon={MailOpen}  label="Inbox (Unread)"  value={counts.inbox}  color="text-violet-600 border-violet-100" />
           </div>
         </div>
 
@@ -863,6 +1035,7 @@ export default function AdminDashboard() {
             {tab === 'demos'    && <DemosTab   token={token} source="demo"  />}
             {tab === 'trials'   && <DemosTab   token={token} source="trial" />}
             {tab === 'users'    && user.is_admin && <UsersTab token={token} />}
+             {tab === 'inbox'   && <InboxTab token={token} user={user} />}
             {tab === 'users'    && !user.is_admin && (
               <div className="flex items-center gap-3 text-slate-500 py-8">
                 <AlertCircle size={20} /> <p>User management requires superadmin access.</p>
