@@ -16,6 +16,7 @@ function verifySignature(rawBody, headers) {
     const svixId        = headers.get('svix-id')        || ''
     const svixTimestamp = headers.get('svix-timestamp') || ''
     const svixSignature = headers.get('svix-signature') || ''
+
     if (!svixId || !svixTimestamp || !svixSignature) return false
 
     // Resend uses whsec_ prefix — strip it and base64-decode the key bytes
@@ -29,66 +30,63 @@ function verifySignature(rawBody, headers) {
     const toSign   = svixId + '.' + svixTimestamp + '.' + rawBody
     const expected = crypto.createHmac('sha256', secretBytes).update(toSign).digest('base64')
 
-    return svixSignature.split(' ').some(sig => {
-      const parts = sig.split(',')
-      return parts.length >= 2 && parts[1] === expected
-    })
+    const svixSigs = svixSignature.split(' ')
+    return svixSigs.some(sig => sig.startsWith('v1,') && sig.slice(3) === expected)
   } catch {
     return false
   }
 }
 
 export async function POST(req) {
-  try {
-    const rawBody = await req.text()
-    if (!verifySignature(rawBody, req.headers)) {
-      console.warn('[inbound] Invalid webhook signature')
-      return NextResponse.json({ ok: false, msg: 'Forbidden.' }, { status: 403 })
-    }
+  const rawBody = await req.text()
 
-    let event
-    try { event = JSON.parse(rawBody) } catch {
-      return NextResponse.json({ ok: false, msg: 'Invalid JSON.' }, { status: 400 })
-    }
-
-    if (event.type !== 'email.received') {
-      return NextResponse.json({ ok: true, skipped: true })
-    }
-
-    const data     = event.data || {}
-    const fromRaw  = data.from    || ''
-    const toRaw    = data.to      || []
-    const subject  = data.subject || '(no subject)'
-    const bodyText = data.text    || ''
-    const bodyHtml = data.html    || ''
-
-    const fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/)
-    const fromName  = fromMatch ? fromMatch[1].trim() : ''
-    const fromEmail = fromMatch ? fromMatch[2].trim() : fromRaw.trim()
-
-    const toEmails = Array.isArray(toRaw) ? toRaw : String(toRaw).split(',').map(e => e.trim())
-
-    const insert = db().prepare(`
-      INSERT INTO inbox_messages (id, to_email, from_email, from_name, subject, body_text, body_html, is_read)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
-    `)
-
-    for (const toEntry of toEmails) {
-      const m       = toEntry.match(/^(.*?)\s*<(.+?)>$/)
-      const toEmail = ((m ? m[2] : toEntry) || '').trim().toLowerCase()
-      if (!toEmail) continue
-      const id = crypto.randomBytes(8).toString('hex')
-      insert.run(id, toEmail, fromEmail, fromName, subject, bodyText, bodyHtml)
-      console.log(`[inbound] stored: to=${toEmail} from=${fromEmail} "${subject}"`)
-    }
-
-    return NextResponse.json({ ok: true })
-  } catch (e) {
-    console.error('[inbound POST]', e)
-    return NextResponse.json({ ok: false, msg: 'Server error.' }, { status: 500 })
+  if (!verifySignature(rawBody, req.headers)) {
+    return NextResponse.json({ ok: false, msg: 'Forbidden.' }, { status: 403 })
   }
-}
 
-export async function GET() {
-  return NextResponse.json({ ok: true, service: 'gigva-inbound-webhook' })
+  let event
+  try {
+    event = JSON.parse(rawBody)
+  } catch {
+    return NextResponse.json({ ok: false, msg: 'Invalid JSON.' }, { status: 400 })
+  }
+
+  if (event.type !== 'email.received') {
+    return NextResponse.json({ ok: true, skipped: true })
+  }
+
+  const data = event.data || {}
+
+  // Log the data keys for debugging (helps identify actual field names Resend sends)
+  console.log('[inbound] event.data keys:', Object.keys(data).join(', '))
+
+  const fromRaw  = data.from    || ''
+  const toRaw    = data.to      || []
+  const subject  = data.subject || '(no subject)'
+
+  // Try multiple possible field names for body content (Resend may use different keys)
+  const bodyText = data.text    || data.body_text || data.plain_text || data.plain || data.body || ''
+  const bodyHtml = data.html    || data.body_html || data.html_body  || ''
+
+  const fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/)
+  const fromName  = fromMatch ? fromMatch[1].trim() : ''
+  const fromEmail = fromMatch ? fromMatch[2].trim() : fromRaw.trim()
+
+  const toEmails = Array.isArray(toRaw) ? toRaw : String(toRaw).split(',').map(e => e.trim())
+
+  const insert = db().prepare(`
+    INSERT INTO inbox_messages (id, to_email, from_email, from_name, subject, body_text, body_html, is_read)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+  `)
+
+  for (const toEntry of toEmails) {
+    const m       = toEntry.match(/^(.*?)\s*<(.+?)>$/)
+    const toEmail = ((m ? m[2] : toEntry) || '').trim().toLowerCase()
+    if (!toEmail) continue
+    const id = crypto.randomBytes(8).toString('hex')
+    insert.run(id, toEmail, fromEmail, fromName, subject, bodyText, bodyHtml)
+    console.log('[inbound] stored msg id=' + id + ' to=' + toEmail + ' body_text_len=' + bodyText.length + ' body_html_len=' + bodyHtml.length)
+  }
+
+  return NextResponse.json({ ok: true })
 }
