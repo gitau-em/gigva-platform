@@ -987,8 +987,8 @@ export default function AdminDashboard() {
     const h = { Authorization: `Bearer ${token}` }
     Promise.all([
       fetch('/api/admin/contacts',           { headers: h }).then(r => r.json()),
-      fetch('/api/admin/demos?source=demo',  { headers: h }).then(r => r.json()),
-      fetch('/api/admin/demos?source=trial', { headers: h }).then(r => r.json()),
+      fetch('/api/admin/demos',              { headers: h }).then(r => r.json()),
+      fetch('/api/admin/demos',              { headers: h }).then(r => r.json()),
       user?.is_admin
         ? fetch('/api/admin/users', { headers: h }).then(r => r.json())
         : Promise.resolve({ users: [] }),
@@ -996,8 +996,8 @@ export default function AdminDashboard() {
     ]).then(([c, d, tr, u, ix]) => {
       setCounts({
         messages: c.contacts?.length  ?? 0,
-        demos:    d.demos?.length      ?? 0,
-        trials:   tr.demos?.length     ?? 0,
+        demos:    d.demos?.filter(x => x.source !== 'trial').length ?? 0,
+        trials:   tr.demos?.filter(x => x.source === 'trial').length ?? 0,
         users:    u.users?.length      ?? 0,
                   inbox:   ix.unread         ?? 0,
       })
