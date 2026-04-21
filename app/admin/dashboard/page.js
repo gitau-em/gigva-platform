@@ -698,6 +698,7 @@ function InboxTab({ token, user }) {
     const [replying,     setReplying]     = useState(false)
     const [replyText,    setReplyText]    = useState('')
     const [replyStatus,  setReplyStatus]  = useState(null)
+    const [expandedSender, setExpandedSender] = useState(null)
 
     const h = { Authorization: `Bearer ${token}` }
 
@@ -772,6 +773,21 @@ function InboxTab({ token, user }) {
                        m.body_text?.toLowerCase().includes(q)
     })
 
+    // Group filtered messages by sender (from_email) for conversation threading
+    const threads = Object.values(
+      filtered.reduce((acc, m) => {
+        const key = (m.from_email || 'unknown').toLowerCase()
+        if (!acc[key]) acc[key] = { key, name: m.from_name || m.from_email, email: m.from_email, msgs: [] }
+        acc[key].msgs.push(m)
+        return acc
+      }, {})
+    ).sort((a, b) => {
+      // Sort threads by most recent message
+      const aLast = a.msgs[0]?.created_at || ''
+      const bLast = b.msgs[0]?.created_at || ''
+      return bLast.localeCompare(aLast)
+    })
+
     const unread = messages.filter(m => !m.is_read).length
 
     return (
@@ -807,7 +823,7 @@ function InboxTab({ token, user }) {
           <div className="flex items-center justify-center py-16">
             <Loader2 size={28} className="animate-spin text-indigo-400" />
   </div>
-        ) : filtered.length === 0 ? (
+        ) : threads.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
             <MailOpen size={36} className="mb-3 opacity-40" />
             <p className="text-sm">{search ? 'No messages match your search.' : 'Your inbox is empty.'}</p>
@@ -819,26 +835,64 @@ function InboxTab({ token, user }) {
                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
          {/* Message list */}
            <div className="lg:col-span-1 border border-slate-200 rounded-xl overflow-hidden">
-           {filtered.map(msg => (
-                           <button key={msg.id} onClick={() => openMsg(msg)}
-                className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors
-                                  ${selected?.id === msg.id ? 'bg-indigo-50 border-l-2 border-l-indigo-500' : ''}
-                                                    ${!msg.is_read ? 'bg-blue-50/40' : ''}`}>
-                <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0 flex-1">
-                                      <p className={`text-sm truncate ${!msg.is_read ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>
-{msg.from_name || msg.from_email}
-</p>
-                    <p className="text-xs text-slate-500 truncate mt-0.5">{msg.subject}</p>
-                    <p className="text-xs text-slate-400 truncate mt-0.5">{msg.body_text?.substring(0, 60)}</p>
-  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <span className="text-[10px] text-slate-400 whitespace-nowrap">{fmtDate(msg.created_at)}</span>
-{!msg.is_read && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-  </div>
-  </div>
-  </button>
-             ))}
+           {threads.map(thread => {
+              const hasUnread = thread.msgs.some(m => !m.is_read)
+              const isExpanded = expandedSender === thread.key
+              const latestMsg = thread.msgs[0]
+              const count = thread.msgs.length
+              return (
+                <div key={thread.key}>
+                  {/* Thread header row - click to expand/collapse */}
+                  <button
+                    onClick={() => setExpandedSender(isExpanded ? null : thread.key)}
+                    className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${hasUnread ? 'bg-blue-50/40' : ''} ${isExpanded ? 'bg-indigo-50 border-l-2 border-l-indigo-400' : ''}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className={`text-sm truncate ${hasUnread ? 'font-semibold text-slate-900' : 'text-slate-700'}`}>
+                            {thread.name}
+                          </p>
+                          {count > 1 && (
+                            <span className="text-xs bg-slate-200 text-slate-600 rounded-full px-1.5 py-0.5 font-medium">{count}</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate mt-0.5">{latestMsg?.subject}</p>
+                        <p className="text-xs text-slate-400 truncate mt-0.5">{latestMsg?.body_text?.substring(0, 60)}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <p className="text-xs text-slate-400">{latestMsg?.created_at ? new Date(latestMsg.created_at).toLocaleDateString() : ''}</p>
+                        {hasUnread && <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />}
+                      </div>
+                    </div>
+                  </button>
+                  {/* Expanded: show all messages in thread */}
+                  {isExpanded && (
+                    <div className="bg-slate-50 border-l-2 border-l-indigo-300">
+                      {[...thread.msgs].reverse().map(msg => (
+                        <button
+                          key={msg.id}
+                          onClick={() => openMsg(msg)}
+                          className={`w-full text-left px-6 py-2.5 border-b border-slate-100 hover:bg-white transition-colors ${selected?.id === msg.id ? 'bg-indigo-50' : ''} ${!msg.is_read ? 'bg-blue-50/30' : ''}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-xs truncate ${!msg.is_read ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>{msg.subject}</p>
+                              <p className="text-xs text-slate-400 truncate">{msg.body_text?.substring(0, 50)}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1 shrink-0">
+                              <p className="text-xs text-slate-400">{msg.created_at ? new Date(msg.created_at).toLocaleDateString() : ''}</p>
+                              {msg.replied && <span className="text-xs text-green-600">✓ replied</span>}
+                              {!msg.is_read && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block" />}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
 </div>
 
 {/* Message detail */}
