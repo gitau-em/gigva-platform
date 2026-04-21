@@ -1,6 +1,6 @@
 /**
  * app/api/inbound/route.js  —  Resend inbound email webhook
- * Stores raw event data and fetches body via Resend API if needed.
+ * Debug version: stores raw payload in body_text if body extraction fails.
  */
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
@@ -22,7 +22,6 @@ function verifySvix(rawBody, headers) {
   } catch { return false }
 }
 
-// Minimal RFC-2822 MIME parser to extract text/plain and text/html parts
 function parseMime(raw) {
   if (!raw || typeof raw !== 'string') return { text: '', html: '' }
   let text = '', html = ''
@@ -58,82 +57,67 @@ export async function POST(req) {
   const rawBody = await req.text()
   const ct = (req.headers.get('content-type') || '').toLowerCase()
 
-  // ── JSON webhook path (Resend sends application/json with svix signature) ──
   if (ct.includes('application/json') || rawBody.trimStart().startsWith('{')) {
     if (WEBHOOK_SECRET && !verifySvix(rawBody, req.headers)) {
-      console.log('[inbound] signature check failed')
+      console.log('[inbound] sig fail')
       return NextResponse.json({ ok: false, msg: 'Forbidden.' }, { status: 403 })
     }
     let event
-    try { event = JSON.parse(rawBody) } catch {
-      return NextResponse.json({ ok: false, msg: 'Bad JSON' }, { status: 400 })
-    }
-
-    console.log('[inbound] type=' + event.type)
+    try { event = JSON.parse(rawBody) } catch { return NextResponse.json({ ok: false, msg: 'Bad JSON' }, { status: 400 }) }
     if (event.type !== 'email.received') return NextResponse.json({ ok: true, skipped: true })
 
     const data = event.data || {}
-    console.log('[inbound] data_keys=' + Object.keys(data).join(',')
-      + ' text_len=' + (data.text||'').length
-      + ' html_len=' + (data.html||'').length
-      + ' payload_len=' + (data.payload||'').length
-      + ' email_id=' + (data.email_id||data.id||''))
+    // LOG EVERYTHING to help debug
+    console.log('[inbound] data:', JSON.stringify(data).substring(0, 500))
 
     const fromRaw = data.from || ''
     const toRaw   = data.to   || []
     const subject = data.subject || '(no subject)'
 
-    // Step 1: direct fields
     let bodyText = data.text || data.body_text || data.plain_text || data.plain || ''
     let bodyHtml = data.html || data.body_html || data.html_body  || ''
 
-    // Step 2: parse RFC-2822 from data.payload
     if (!bodyText && !bodyHtml && data.payload) {
       const parsed = parseMime(data.payload)
       bodyText = parsed.text; bodyHtml = parsed.html
-      console.log('[inbound] parsed payload: text_len=' + bodyText.length + ' html_len=' + bodyHtml.length)
     }
 
-    // Step 3: fetch from Resend API using email_id
+    // Fallback: fetch via Resend API
     const emailId = data.email_id || data.id || ''
     if (!bodyText && !bodyHtml && emailId && RESEND_API_KEY) {
       try {
-        const r = await fetch('https://api.resend.com/emails/' + emailId, {
-          headers: { Authorization: 'Bearer ' + RESEND_API_KEY }
-        })
-        if (r.ok) {
-          const em = await r.json()
-          bodyText = em.text || ''
-          bodyHtml = em.html || ''
-          console.log('[inbound] fetched from API: text_len=' + bodyText.length + ' html_len=' + bodyHtml.length)
-        }
-      } catch (e) { console.log('[inbound] API fetch error:', e.message) }
+        const r = await fetch('https://api.resend.com/emails/' + emailId, { headers: { Authorization: 'Bearer ' + RESEND_API_KEY } })
+        if (r.ok) { const em = await r.json(); bodyText = em.text || ''; bodyHtml = em.html || '' }
+      } catch {}
     }
 
-    console.log('[inbound] final: text_len=' + bodyText.length + ' html_len=' + bodyHtml.length)
+    // DEBUG FALLBACK: if still empty, store the raw JSON data so staff can see what arrived
+    if (!bodyText && !bodyHtml) {
+      bodyText = '[DEBUG - Raw Resend data]: ' + JSON.stringify(data)
+    }
+
     return storeMessages(fromRaw, toRaw, subject, bodyText, bodyHtml)
   }
 
-  // ── Form-data path ──
+  // Form-data
   try {
     const form = await new Request(req.url, { method: 'POST', headers: req.headers, body: rawBody }).formData()
-    const fromRaw  = String(form.get('from') || '')
-    const toRaw    = String(form.get('to')   || '').split(',').map(s => s.trim())
-    const subject  = String(form.get('subject') || '(no subject)')
-    const bodyText = String(form.get('text') || form.get('plain') || '')
-    const bodyHtml = String(form.get('html')  || '')
-    console.log('[inbound/form] from=' + fromRaw + ' text_len=' + bodyText.length)
-    return storeMessages(fromRaw, toRaw, subject, bodyText, bodyHtml)
-  } catch (e) { console.log('[inbound/form] error:', e.message) }
+    return storeMessages(
+      String(form.get('from') || ''),
+      String(form.get('to') || '').split(',').map(s => s.trim()),
+      String(form.get('subject') || '(no subject)'),
+      String(form.get('text') || form.get('plain') || ''),
+      String(form.get('html') || '')
+    )
+  } catch {}
 
-  console.log('[inbound] unknown format, ct=' + ct)
   return NextResponse.json({ ok: false, msg: 'Unknown format' }, { status: 400 })
 }
 
 function storeMessages(fromRaw, toRaw, subject, bodyText, bodyHtml) {
-  const fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/)
-  const fromName  = fromMatch ? fromMatch[1].trim() : ''
-  const fromEmail = fromMatch ? fromMatch[2].trim() : fromRaw.trim()
+  const fm = fromRaw.match(/^(.*?)\s*<(.+?)>$/)
+  const fromName  = fm ? fm[1].trim() : ''
+  const fromEmail = fm ? fm[2].trim() : fromRaw.trim()
   const toEmails  = Array.isArray(toRaw) ? toRaw : String(toRaw).split(',').map(e => e.trim())
   const insert = db().prepare(
     `INSERT INTO inbox_messages (id, to_email, from_email, from_name, subject, body_text, body_html, is_read)
@@ -145,7 +129,7 @@ function storeMessages(fromRaw, toRaw, subject, bodyText, bodyHtml) {
     if (!toEmail) continue
     const id = crypto.randomBytes(8).toString('hex')
     insert.run(id, toEmail, fromEmail, fromName, subject, bodyText, bodyHtml)
-    console.log('[inbound] stored id=' + id + ' to=' + toEmail + ' text_len=' + bodyText.length)
+    console.log('[inbound] stored id=' + id + ' text_len=' + bodyText.length)
   }
   return NextResponse.json({ ok: true })
 }
