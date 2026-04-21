@@ -101,3 +101,4 @@ export async function POST(req) {
 
   return NextResponse.json({ ok: true, emailId: sendResult.data && sendResult.data.id })
 }
+
