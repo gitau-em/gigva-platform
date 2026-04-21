@@ -66,11 +66,28 @@ export async function POST(req) {
     fromEmail = 'noreply@gigva.co.ke'
   }
 
+  const SIG_HTML = [
+    '<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;">',
+    '<tr><td style="background:#000000;padding:20px 24px;border-top:3px solid #0ea5e9;">',
+    '<table cellpadding="0" cellspacing="0">',
+    '<tr><td style="background:#0ea5e9;border-radius:7px;padding:7px 10px;vertical-align:middle;">',
+    '<span style="color:#fff;font-size:15px;font-weight:800;letter-spacing:-0.5px;font-family:system-ui,sans-serif;">GIGVA</span>',
+    '<span style="color:#bae6fd;font-size:7px;font-weight:700;letter-spacing:3.5px;display:block;margin-top:1px;font-family:system-ui,sans-serif;">KENYA</span>',
+    '</td></tr></table>',
+    '<p style="margin:12px 0 8px;font-size:12px;font-style:italic;color:#7dd3fc;font-family:system-ui,sans-serif;">',
+    'Powering Innovation with Smart Software Solutions in Kenya',
+    '</p>',
+    '<p style="margin:0;font-size:11px;color:#475569;font-family:system-ui,sans-serif;">',
+    '<a href="https://gigva.co.ke" style="color:#0ea5e9;text-decoration:none;">gigva.co.ke</a>',
+    '</p>',
+    '</td></tr></table>'
+  ].join('')
+
   const htmlBody =
     '<div style="font-family:system-ui,sans-serif;font-size:14px;color:#1e293b;line-height:1.6">'
     + replyText.trim().replace(/\n/g, '<br/>')
-    + '</div><hr style="margin:24px 0;border:0;border-top:1px solid #e2e8f0"/>'
-    + '<p style="font-size:12px;color:#94a3b8">Sent via Gigva Staff Portal</p>'
+    + '</div>'
+    + SIG_HTML
 
   let sendResult
   try {
