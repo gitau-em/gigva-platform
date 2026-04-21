@@ -89,8 +89,9 @@ function MessagesTab({ token }) {
   useEffect(() => { load() }, [load])
 
   const filtered = rows.filter(r =>
-    !search || [r.name, r.email, r.company, r.message]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase()))
+    (source === 'trial' ? r.source === 'trial' : r.source !== 'trial') &&
+    (!search || [r.name, r.email, r.company, r.message]
+      .some(v => v?.toLowerCase().includes(search.toLowerCase())))
   )
 
   const toggleSel = id => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -231,7 +232,7 @@ function DemosTab({ token, source }) {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const r = await fetch(`/api/admin/demos?source=${source}`, { headers: { Authorization: `Bearer ${token}` } })
+      const r = await fetch(`/api/admin/demos${source === 'trial' ? '?source=trial' : ''}`, { headers: { Authorization: `Bearer ${token}` } })
       const d = await r.json()
       if (d.ok) setRows(d.demos)
     } finally { setLoading(false) }
