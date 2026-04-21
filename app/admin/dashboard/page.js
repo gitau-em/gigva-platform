@@ -918,14 +918,24 @@ function InboxTab({ token, user }) {
                                           <Trash2 size={15} />
                       </button>
                       </div>
-                <div className="border-t border-slate-100 pt-4">
+                <div className="border-t border-slate-100 pt-4 space-y-4">
+                    {/* Email body */}
                     {selected.body_html ? (
-                                          <div className="prose prose-sm max-w-none text-slate-700"
-                                            dangerouslySetInnerHTML={{ __html: selected.body_html }} />
-                  ) : (
-                                        <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">{selected.body_text}</pre>
-                  )}
-</div>
+                      <div className="prose prose-sm max-w-none text-slate-700"
+                        dangerouslySetInnerHTML={{ __html: selected.body_html }} />
+                    ) : selected.body_text ? (
+                      <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">{selected.body_text}</pre>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">Email body not available — message subject: {selected.subject}</p>
+                    )}
+                    {/* Staff reply (if any) */}
+                    {selected.reply_text && (
+                      <div className="mt-4 border-t border-slate-100 pt-3">
+                        <p className="text-xs font-semibold text-indigo-600 mb-1">Your reply:</p>
+                        <pre className="whitespace-pre-wrap text-sm text-slate-600 font-sans bg-indigo-50 rounded-lg p-3">{selected.reply_text}</pre>
+                      </div>
+                    )}
+                  </div>
                 {/* Reply Form */}
                 {replying && (
                   <div className="border-t border-indigo-100 pt-4 mt-4">
