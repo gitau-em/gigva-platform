@@ -1,20 +1,23 @@
 /**
  * app/api/admin/inbox/reply/route.js
  * POST /api/admin/inbox/reply
- * Send a reply email to an inbox message sender via Resend
+ * Send a reply email to an inbox message sender via Resend.
+ * The FROM address is always the @gigva.co.ke address the original
+ * message was sent TO (personalised per staff member), regardless of
+ * which account is currently logged in (e.g. Super Admin).
  */
 
 import { NextResponse } from 'next/server'
-import { verifyToken }  from '@/lib/auth'
-import { db }           from '@/lib/db'
-import { Resend }       from 'resend'
+import { verifyToken } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req) {
-  const auth = req.headers.get('authorization') || ''
+  const auth  = req.headers.get('authorization') || ''
   const token = auth.replace('Bearer ', '')
-  const user = verifyToken(token)
+  const user  = verifyToken(token)
   if (!user) {
     return NextResponse.json({ ok: false, msg: 'Unauthorized' }, { status: 401 })
   }
@@ -44,11 +47,24 @@ export async function POST(req) {
     ? 'Re: ' + original.subject
     : (original.subject || 'Re: (no subject)')
 
-  const staffEmail = user.email || ''
-  const fromName = user.name || 'Gigva Team'
-  const fromEmail = staffEmail.endsWith('@gigva.co.ke')
-    ? fromName + ' <' + staffEmail + '>'
-    : 'Gigva Team <noreply@gigva.co.ke>'
+  // Always send from the staff address the original email was addressed TO.
+  // This personalises replies: cto@gigva.co.ke replies as cto@gigva.co.ke,
+  // samuel@gigva.co.ke replies as samuel@gigva.co.ke, etc.
+  // Fall back to the logged-in user's own @gigva.co.ke address if available,
+  // otherwise use noreply@gigva.co.ke (should not normally happen).
+  const inboxAddress = (original.to_email || '').trim().toLowerCase()
+  const staffAddress = (user.email || '').trim().toLowerCase()
+
+  let fromEmail
+  if (inboxAddress.endsWith('@gigva.co.ke')) {
+    // Use the inbox owner's address — e.g. cto@gigva.co.ke
+    fromEmail = inboxAddress
+  } else if (staffAddress.endsWith('@gigva.co.ke')) {
+    // Logged-in user is a gigva staff member directly
+    fromEmail = staffAddress
+  } else {
+    fromEmail = 'noreply@gigva.co.ke'
+  }
 
   const htmlBody =
     '<div style="font-family:system-ui,sans-serif;font-size:14px;color:#1e293b;line-height:1.6">'
@@ -64,7 +80,7 @@ export async function POST(req) {
       subject: subject,
       text:    replyText.trim(),
       html:    htmlBody,
-      replyTo: staffEmail || 'noreply@gigva.co.ke',
+      replyTo: fromEmail,
     })
   } catch (err) {
     console.error('[inbox/reply] Resend error:', err)
@@ -78,7 +94,7 @@ export async function POST(req) {
   try {
     database.prepare(
       'UPDATE inbox_messages SET replied = 1, replied_at = ?, replied_by = ?, reply_text = ? WHERE id = ?'
-    ).run(new Date().toISOString(), user.email, replyText.trim(), messageId)
+    ).run(new Date().toISOString(), fromEmail, replyText.trim(), messageId)
   } catch (dbErr) {
     console.warn('[inbox/reply] DB update failed:', dbErr.message)
   }
