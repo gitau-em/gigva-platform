@@ -89,9 +89,8 @@ function MessagesTab({ token }) {
   useEffect(() => { load() }, [load])
 
   const filtered = rows.filter(r =>
-    (source === 'trial' ? r.source === 'trial' : r.source !== 'trial') &&
-    (!search || [r.name, r.email, r.company, r.message]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase())))
+    !search || [r.name, r.email, r.company, r.message]
+      .some(v => v?.toLowerCase().includes(search.toLowerCase()))
   )
 
   const toggleSel = id => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -241,8 +240,9 @@ function DemosTab({ token, source }) {
   useEffect(() => { load() }, [load])
 
   const filtered = rows.filter(r =>
-    !search || [r.name, r.email, r.company, r.business_type, r.message]
-      .some(v => v?.toLowerCase().includes(search.toLowerCase()))
+    (source === 'trial' ? r.source === 'trial' : r.source !== 'trial') &&
+    (!search || [r.name, r.email, r.company, r.business_type, r.message]
+      .some(v => v?.toLowerCase().includes(search.toLowerCase())))
   )
   const toggleSel = id => setSel(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
   const selAll    = ()  => setSel(s => s.size === filtered.length ? new Set() : new Set(filtered.map(r => r.id)))
