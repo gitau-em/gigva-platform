@@ -297,7 +297,7 @@ export default function AboutPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
             <div className="flex items-center gap-2 text-sm text-slate-700">
               <Mail size={15} className="text-sky-500" />
-              <a href="mailto:hello@gigvakenya.co.ke" className="hover:text-sky-600 transition-colors">hello@gigvakenya.co.ke</a>
+              <a href="mailto:hello@gigva.co.ke" className="hover:text-sky-600 transition-colors">hello@gigva.co.ke</a>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-700">
               <MapPin size={15} className="text-sky-500" />
@@ -305,7 +305,6 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-3 justify-center">
-            <Link href="/book-demo" className="btn-primary">Book a demo <ArrowRight size={14} /></Link>
             <Link href="/contact" className="btn-secondary">Send a message</Link>
           </div>
         </div>
