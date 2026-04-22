@@ -2,11 +2,8 @@
  * app/api/admin/inbox/reply/route.js
  * POST /api/admin/inbox/reply
  * Send a reply email to an inbox message sender via Resend.
- * The FROM address is always the @gigva.co.ke address the original
- * message was sent TO (personalised per staff member), regardless of
- * which account is currently logged in (e.g. Super Admin).
+ * Supports multipart/form-data for file attachments.
  */
-
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -15,19 +12,36 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req) {
-  const auth  = req.headers.get('authorization') || ''
+  const auth = req.headers.get('authorization') || ''
   const token = auth.replace('Bearer ', '')
-  const user  = verifyToken(token)
+  const user = verifyToken(token)
   if (!user) {
     return NextResponse.json({ ok: false, msg: 'Unauthorized' }, { status: 401 })
   }
 
-  let body
-  try { body = await req.json() } catch {
-    return NextResponse.json({ ok: false, msg: 'Invalid JSON' }, { status: 400 })
+  let messageId, replyText, attachments = []
+  const contentType = req.headers.get('content-type') || ''
+
+  if (contentType.includes('multipart/form-data')) {
+    const formData = await req.formData()
+    messageId = formData.get('messageId')
+    replyText = formData.get('replyText')
+    const files = formData.getAll('attachments')
+    for (const file of files) {
+      if (file && file.size > 0) {
+        const buffer = await file.arrayBuffer()
+        attachments.push({ filename: file.name, content: Buffer.from(buffer) })
+      }
+    }
+  } else {
+    let body
+    try { body = await req.json() } catch {
+      return NextResponse.json({ ok: false, msg: 'Invalid body' }, { status: 400 })
+    }
+    messageId = body.messageId
+    replyText = body.replyText
   }
 
-  const { messageId, replyText } = body
   if (!messageId || !replyText || !replyText.trim()) {
     return NextResponse.json({ ok: false, msg: 'messageId and replyText required' }, { status: 400 })
   }
@@ -47,20 +61,12 @@ export async function POST(req) {
     ? 'Re: ' + original.subject
     : (original.subject || 'Re: (no subject)')
 
-  // Always send from the staff address the original email was addressed TO.
-  // This personalises replies: cto@gigva.co.ke replies as cto@gigva.co.ke,
-  // samuel@gigva.co.ke replies as samuel@gigva.co.ke, etc.
-  // Fall back to the logged-in user's own @gigva.co.ke address if available,
-  // otherwise use noreply@gigva.co.ke (should not normally happen).
   const inboxAddress = (original.to_email || '').trim().toLowerCase()
   const staffAddress = (user.email || '').trim().toLowerCase()
-
   let fromEmail
   if (inboxAddress.endsWith('@gigva.co.ke')) {
-    // Use the inbox owner's address — e.g. cto@gigva.co.ke
     fromEmail = inboxAddress
   } else if (staffAddress.endsWith('@gigva.co.ke')) {
-    // Logged-in user is a gigva staff member directly
     fromEmail = staffAddress
   } else {
     fromEmail = 'noreply@gigva.co.ke'
@@ -84,21 +90,16 @@ export async function POST(req) {
   ].join('')
 
   const htmlBody =
-    '<div style="font-family:system-ui,sans-serif;font-size:14px;color:#1e293b;line-height:1.6">'
-    + replyText.trim().replace(/\n/g, '<br/>')
-    + '</div>'
-    + SIG_HTML
+    '<div style="font-family:system-ui,sans-serif;font-size:14px;color:#1e293b;line-height:1.6">' +
+    replyText.trim().replace(/\n/g, '<br/>') +
+    '</div>' + SIG_HTML
+
+  const emailPayload = { from: fromEmail, to: [replyTo], subject, text: replyText.trim(), html: htmlBody, replyTo: fromEmail }
+  if (attachments.length > 0) emailPayload.attachments = attachments
 
   let sendResult
   try {
-    sendResult = await resend.emails.send({
-      from:    fromEmail,
-      to:      [replyTo],
-      subject: subject,
-      text:    replyText.trim(),
-      html:    htmlBody,
-      replyTo: fromEmail,
-    })
+    sendResult = await resend.emails.send(emailPayload)
   } catch (err) {
     console.error('[inbox/reply] Resend error:', err)
     return NextResponse.json({ ok: false, msg: 'Failed to send', detail: err.message }, { status: 500 })
@@ -110,12 +111,15 @@ export async function POST(req) {
 
   try {
     database.prepare(
+      'INSERT INTO sent_emails (from_email, to_email, subject, body_text, body_html, resend_id) VALUES (?, ?, ?, ?, ?, ?)'
+    ).run(fromEmail, replyTo, subject, replyText.trim(), htmlBody, sendResult.data?.id || null)
+  } catch (dbErr) { console.warn('[inbox/reply] sent_emails insert failed:', dbErr.message) }
+
+  try {
+    database.prepare(
       'UPDATE inbox_messages SET replied = 1, replied_at = ?, replied_by = ?, reply_text = ? WHERE id = ?'
     ).run(new Date().toISOString(), fromEmail, replyText.trim(), messageId)
-  } catch (dbErr) {
-    console.warn('[inbox/reply] DB update failed:', dbErr.message)
-  }
+  } catch (dbErr) { console.warn('[inbox/reply] DB update failed:', dbErr.message) }
 
   return NextResponse.json({ ok: true, emailId: sendResult.data && sendResult.data.id })
 }
-
