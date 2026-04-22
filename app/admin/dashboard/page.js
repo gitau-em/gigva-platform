@@ -696,6 +696,7 @@ function SentTab({ token, user }) {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
   const [search, setSearch]   = useState('')
+  const [checkedSent, setCheckedSent] = useState(new Set())
 
   const h = { Authorization: `Bearer ${token}` }
 
@@ -732,19 +733,42 @@ function SentTab({ token, user }) {
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sent..." className="text-sm bg-transparent outline-none w-full placeholder-slate-400" />
           </div>
         </div>
+        {checkedSent.size > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border-b border-red-200">
+            <span className="text-xs text-red-700 font-medium">{checkedSent.size} selected</span>
+            <button onClick={() => { checkedSent.forEach(id => { fetch('/api/admin/sent', { method: 'DELETE', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).then(() => setEmails(prev => prev.filter(e => e.id !== id))) }); setCheckedSent(new Set()); if (checkedSent.has(selected?.id)) setSelected(null) }}
+              className="ml-auto flex items-center gap-1 text-xs bg-red-500 text-white px-2.5 py-1 rounded-lg hover:bg-red-600">
+              <Trash2 size={12} /> Delete selected
+            </button>
+          </div>
+        )}
+        {filtered.length > 0 && (
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50">
+            <input type="checkbox" className="w-3.5 h-3.5 accent-indigo-600 cursor-pointer"
+              checked={checkedSent.size === filtered.length && filtered.length > 0}
+              onChange={ev => setCheckedSent(ev.target.checked ? new Set(filtered.map(x => x.id)) : new Set())} />
+            <span className="text-[10px] text-slate-400">Select all</span>
+          </div>
+        )}
         <div className="overflow-y-auto flex-1">
           {filtered.length === 0 ? (
             <div className="p-6 text-center text-slate-400 text-sm">No sent emails yet</div>
           ) : filtered.map(e => (
-            <button key={e.id} onClick={() => setSelected(e)}
-              className={`w-full text-left px-3 py-2.5 border-b border-slate-100 hover:bg-slate-50 transition-colors ${selected?.id === e.id ? 'bg-indigo-50 border-indigo-200' : ''}`}>
-              <div className="flex items-start justify-between gap-1">
-                <span className="font-medium text-slate-700 text-xs truncate">{e.to_email}</span>
-                <span className="text-[10px] text-slate-400 flex-shrink-0">{e.sent_at ? new Date(e.sent_at).toLocaleDateString('en-KE', { month: 'short', day: '2-digit' }) : ''}</span>
+            <div key={e.id} className={`flex items-start border-b border-slate-100 hover:bg-slate-50 transition-colors ${checkedSent.has(e.id) ? 'bg-indigo-50/60' : ''}`}>
+              <div className="flex items-center pl-3 pt-3 pb-2.5">
+                <input type="checkbox" className="w-3.5 h-3.5 accent-indigo-600 cursor-pointer flex-shrink-0"
+                  checked={checkedSent.has(e.id)}
+                  onChange={ev => { ev.stopPropagation(); setCheckedSent(prev => { const n = new Set(prev); n.has(e.id) ? n.delete(e.id) : n.add(e.id); return n }) }} />
               </div>
-              <p className="text-xs text-slate-500 truncate mt-0.5">{e.subject}</p>
-              <p className="text-[11px] text-slate-400 truncate mt-0.5">{e.body_text?.substring(0, 60)}</p>
-            </button>
+              <button className={`flex-1 text-left px-3 py-2.5 ${selected?.id === e.id ? 'bg-indigo-50' : ''}`} onClick={() => setSelected(e)}>
+                <div className="flex items-start justify-between gap-1">
+                  <span className="font-medium text-slate-700 text-xs truncate">{e.to_email}</span>
+                  <span className="text-[10px] text-slate-400 flex-shrink-0">{e.sent_at ? new Date(e.sent_at).toLocaleDateString('en-KE', { month: 'short', day: '2-digit' }) : ''}</span>
+                </div>
+                <p className="text-xs text-slate-500 truncate mt-0.5">{e.subject}</p>
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">{e.body_text?.substring(0, 60)}</p>
+              </button>
+            </div>
           ))}
         </div>
       </div>
@@ -785,6 +809,7 @@ function InboxTab({ token, user }) {
     const [replyText,    setReplyText]    = useState('')
     const [replyStatus,  setReplyStatus]  = useState(null)
     const [expandedSender, setExpandedSender] = useState(null)
+    const [checkedInbox, setCheckedInbox] = useState(new Set())
 
     const h = { Authorization: `Bearer ${token}` }
 
@@ -932,17 +957,47 @@ function InboxTab({ token, user }) {
                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
          {/* Message list */}
            <div className="lg:col-span-1 border border-slate-200 rounded-xl overflow-hidden">
+           {/* Inbox bulk action bar */}
+           {checkedInbox.size > 0 && (
+             <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border-b border-red-200">
+               <span className="text-xs text-red-700 font-medium">{checkedInbox.size} selected</span>
+               <div className="ml-auto flex items-center gap-2">
+                 <button onClick={() => { const firstId = [...checkedInbox][0]; const msg = messages.find(m => m.id === firstId); if (msg) { setSelected(msg); setReplying(true) } setCheckedInbox(new Set()) }}
+                   className="flex items-center gap-1 text-xs bg-indigo-600 text-white px-2.5 py-1 rounded-lg hover:bg-indigo-700">
+                   <MessageSquareReply size={12} /> Reply
+                 </button>
+                 <button onClick={() => { checkedInbox.forEach(id => { fetch('/api/admin/inbox', { method: 'DELETE', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }).then(() => { setMessages(prev => prev.filter(m => m.id !== id)); if (selected?.id === id) setSelected(null) }) }); setCheckedInbox(new Set()) }}
+                   className="flex items-center gap-1 text-xs bg-red-500 text-white px-2.5 py-1 rounded-lg hover:bg-red-600">
+                   <Trash2 size={12} /> Delete selected
+                 </button>
+               </div>
+             </div>
+           )}
+           {threads.length > 0 && (
+             <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-100 bg-slate-50">
+               <input type="checkbox" className="w-3.5 h-3.5 accent-indigo-600 cursor-pointer"
+                 checked={checkedInbox.size === messages.length && messages.length > 0}
+                 onChange={ev => setCheckedInbox(ev.target.checked ? new Set(messages.map(m => m.id)) : new Set())} />
+               <span className="text-[10px] text-slate-400">Select all</span>
+             </div>
+           )}
            {threads.map(thread => {
               const hasUnread = thread.msgs.some(m => !m.is_read)
               const isExpanded = expandedSender === thread.key
               const latestMsg = thread.msgs[0]
               const count = thread.msgs.length
+              const threadChecked = thread.msgs.some(m => checkedInbox.has(m.id))
               return (
                 <div key={thread.key}>
-                  {/* Thread header row - click to expand/collapse */}
+                  <div className={`flex items-center ${checkedInbox.size > 0 || threadChecked ? '' : ''}`}>
+                  <div className="flex items-center pl-3 flex-shrink-0">
+                    <input type="checkbox" className="w-3.5 h-3.5 accent-indigo-600 cursor-pointer"
+                      checked={threadChecked}
+                      onChange={ev => { ev.stopPropagation(); setCheckedInbox(prev => { const n = new Set(prev); thread.msgs.forEach(m => ev.target.checked ? n.add(m.id) : n.delete(m.id)); return n }) }} />
+                  </div>
                   <button
                     onClick={() => setExpandedSender(isExpanded ? null : thread.key)}
-                    className={`w-full text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${hasUnread ? 'bg-blue-50/40' : ''} ${isExpanded ? 'bg-indigo-50 border-l-2 border-l-indigo-400' : ''}`}
+                    className={`flex-1 text-left px-4 py-3 border-b border-slate-100 hover:bg-slate-50 transition-colors ${hasUnread ? 'bg-blue-50/40' : ''} ${isExpanded ? 'bg-indigo-50 border-l-2 border-l-indigo-400' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
@@ -963,6 +1018,7 @@ function InboxTab({ token, user }) {
                       </div>
                     </div>
                   </button>
+                  </div>
                   {/* Expanded: show all messages in thread */}
                   {isExpanded && (
                     <div className="bg-slate-50 border-l-2 border-l-indigo-300">
