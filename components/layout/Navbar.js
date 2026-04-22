@@ -181,7 +181,7 @@ export default function Navbar() {
             Start Free Trial
             <ArrowRight size={15} />
           </Link>
-          <p className="text-[10px] text-slate-400 text-center mt-2">No setup fee · 3 months free</p>
+          <p className="text-[10px] text-slate-400 text-center mt-2">No setup fee · 30 days free</p>
         </div>
       </div>
     </>
