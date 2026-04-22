@@ -12,17 +12,8 @@ export default function CtaBanner() {
           </h2>
           <p className="text-slate-400 mb-8 leading-relaxed max-w-xl mx-auto">
             Retail shops, logistics firms, and SMEs across Nairobi use Gigva to eliminate
-            spreadsheet reconciliation. 3 months free, full access, no credit card.
+            spreadsheet reconciliation. 30 days free, full access, no credit card.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-            <Link href="/trial" className="btn-primary py-3 px-7 text-base justify-center">
-              Start free trial <ArrowRight size={16} />
-            </Link>
-            <Link href="/book-demo" className="btn-secondary py-3 px-7 text-base justify-center bg-transparent text-slate-300 border-slate-700 hover:border-slate-500 hover:text-white">
-              Book a demo
-            </Link>
-          </div>
 
           <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center">
             {[
