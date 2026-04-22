@@ -3,7 +3,7 @@ import { CheckCircle2, X, ArrowRight } from 'lucide-react'
 
 export const metadata = {
   title: 'Pricing',
-  description: 'Simple, transparent pricing for Gigva. Free for 3 months, then from KSh 2,999/month. No lock-in.',
+  description: 'Simple, transparent pricing for Gigva. Free for 30 days, then from KSh 2,999/month. No lock-in.',
 }
 
 const PLANS = [
@@ -77,10 +77,10 @@ const PLANS = [
 
 const FAQS = [
   { q: 'What counts as a transaction?', a: 'Any M-Pesa C2B payment received into your registered Paybill or Till number. Outgoing payments (B2C) are not counted toward your limit.' },
-  { q: 'What happens after the 3-month free trial?', a: 'We will email you a reminder 7 days before your trial ends. You choose a plan or your account is paused — no automatic charges, no credit card required for the trial.' },
+  { q: 'What happens after the 30-day free trial?', a: 'We will email you a reminder 7 days before your trial ends. You choose a plan or your account is paused — no automatic charges, no credit card required for the trial.' },
   { q: 'Can I upgrade or downgrade my plan?', a: 'Yes, at any time. Upgrades take effect immediately. Downgrades take effect at the next billing date. You will not be charged twice for the same period.' },
-  { q: 'Is the free trial really full access?', a: 'Yes. Every feature in every module is available during your trial. There are no feature gates or plan restrictions for the first 3 months.' },
-  { q: 'Do I need to enter a credit card for the trial?', a: 'No. You get 3 months of full access without a payment method. We only ask for payment details when you choose to continue.' },
+  { q: 'Is the free trial really full access?', a: 'Yes. Every feature in every module is available during your trial. There are no feature gates or plan restrictions for the first 30 days.' },
+  { q: 'Do I need to enter a credit card for the trial?', a: 'No. You get 30 days of full access without a payment method. We only ask for payment details when you choose to continue.' },
   { q: 'What happens to my data if I cancel?', a: 'You can export all your transaction data and reports at any time. After cancellation, your account is paused for 90 days before data is deleted — giving you time to reconsider or export.' },
 ]
 
@@ -95,12 +95,12 @@ export default function PricingPage() {
             Simple pricing. No surprises.
           </h1>
           <p className="text-slate-600 text-lg leading-relaxed mb-4">
-            Full access for 3 months, free. After that, pay based on how many 
+            Full access for 30 days, free. After that, pay based on how many 
             M-Pesa transactions you process per month. No lock-in, no setup fee.
           </p>
           <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-semibold px-4 py-2 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            3 months free · No credit card required
+            30 days free · No credit card required
           </div>
         </div>
       </section>
