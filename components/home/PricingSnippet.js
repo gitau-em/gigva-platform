@@ -9,7 +9,7 @@ export default function PricingSnippet() {
           <div>
             <p className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-3">Pricing</p>
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
-              Free for 3 months.<br />From KSh 2,999 after that.
+              Free for 30 days.<br />From KSh 2,999 after that.
             </h2>
             <p className="text-slate-600 mb-5 text-sm leading-relaxed">
               Full access to every feature from day one — payments, analytics, alerts,
@@ -40,7 +40,7 @@ export default function PricingSnippet() {
             ))}
             <div className="flex items-center gap-2 pt-1">
               <CheckCircle2 size={13} className="text-emerald-500" />
-              <span className="text-xs text-slate-600">All plans include full module access and a 3-month free trial</span>
+              <span className="text-xs text-slate-600">All plans include full module access and a 30-day free trial</span>
             </div>
           </div>
         </div>
