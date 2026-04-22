@@ -1,6 +1,5 @@
 import Link from 'next/link'
 
-
 export const metadata = {
   title: 'Privacy Policy',
   description: 'Gigva Kenya Limited Privacy Policy — how we collect, use, store, and protect your personal and business data.',
