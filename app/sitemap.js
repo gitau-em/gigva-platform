@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigvakenya.co.ke'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'
 
 export default function sitemap() {
   const routes = [
@@ -18,8 +18,8 @@ export default function sitemap() {
 
   return routes.map(r => ({
     url: `${BASE}${r.url}`,
-    lastModified: new Date().toISOString(),
+    lastModified:    new Date(),
     changeFrequency: r.changeFrequency,
-    priority: r.priority,
+    priority:        r.priority,
   }))
 }
