@@ -32,7 +32,7 @@ const LEADERSHIP = [
     role: 'Head of Customer Success',
     since: 'With Gigva since 2014',
     bio: 'Accountant by training. Ensures reconciliation outputs are correct and useful, and leads all customer onboarding and ongoing support.',
-    photo: '/team/samuel-otieno.webp',
+    photo: '/team/samuel-otieno.jpg',
     email: 'samuel.otieno@gigva.co.ke',
   },
 ]
@@ -45,7 +45,6 @@ const TEAM = [
     since: 'With Gigva since 2017',
     bio: 'Leads product strategy and roadmap. Works directly with customers across retail and logistics.',
     photo: '/team/njeri-mwangi.webp',
-    email: 'njeri.mwangi@gigva.co.ke',
   },
   {
     initials: 'EG',
@@ -54,7 +53,6 @@ const TEAM = [
     since: 'With Gigva since 2016',
     bio: 'Joined Gigva in 2016 as an IT Support Technician and progressed through the ranks to Senior Software Engineer before being appointed Lead Engineer in 2021. His journey reflects strong technical growth and a deep understanding of the company\'s systems and product development, contributing significantly to the development, reliability, and evolution of the platform.',
     photo: '/team/edward-gitau.webp',
-    email: 'edward.gitau@gigva.co.ke',
   },
   {
     initials: 'DN',
@@ -62,8 +60,7 @@ const TEAM = [
     role: 'Operations Lead',
     since: 'With Gigva since 2020',
     bio: 'Oversees the day-to-day operational processes that support platform delivery.',
-    photo: '/team/daniel-njoroge.webp',
-    email: 'daniel.njoroge@gigva.co.ke',
+    photo: '/team/daniel-njoroge.jpg',
   },
   {
     initials: 'JO',
@@ -71,8 +68,7 @@ const TEAM = [
     role: 'Finance & Compliance Lead',
     since: 'With Gigva since 2016',
     bio: 'Manages financial operations and ensures compliance with the Kenya Data Protection Act 2019.',
-    photo: '/team/james-odhiambo.webp',
-    email: 'james.odhiambo@gigva.co.ke',
+    photo: '/team/james-odhiambo.jpg',
   },
   {
     initials: 'FK',
@@ -81,7 +77,6 @@ const TEAM = [
     since: 'With Gigva since 2018',
     bio: 'Responsible for people management, hiring, and internal processes.',
     photo: '/team/fatuma-kamau.webp',
-    email: 'fatuma.kamau@gigva.co.ke',
   },
 ]
 
