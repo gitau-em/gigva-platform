@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Mail, Calendar, Zap, LogOut, RefreshCw, Trash2, CheckCheck,
+  Mail, Calendar, Zap, LogOut, RefreshCw, Trash2, CheckCheck, Send, Paperclip,
   MessageSquareReply, CheckCircle2, XCircle, PhoneCall,
   Loader2, ChevronDown, ChevronUp, Search, Users,
   ShieldCheck, ExternalLink, PlusCircle, UserX, Key,
@@ -10,9 +10,9 @@ import {
 } from 'lucide-react'
 import { ROLES } from '@/lib/roleConfig'
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// âââ helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function fmtDate(iso) {
-  if (!iso) return '—'
+  if (!iso) return 'â'
   const d = new Date(iso)
   return d.toLocaleDateString('en-KE', {
     day: '2-digit', month: 'short', year: 'numeric',
@@ -65,7 +65,7 @@ function Toast({ msg }) {
   )
 }
 
-// ─── Messages tab ────────────────────────────────────────────────────────────
+// âââ Messages tab ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function MessagesTab({ token }) {
   const [rows, setRows]       = useState([])
   const [loading, setLoading] = useState(true)
@@ -122,7 +122,7 @@ function MessagesTab({ token }) {
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input className="w-full pl-8 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            placeholder="Search messages…" value={search} onChange={e => setSearch(e.target.value)} />
+            placeholder="Search messagesâ¦" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {selected.size > 0 && (
           <button onClick={() => { if (confirm(`Delete ${selected.size} message(s)?`)) del([...selected]) }}
@@ -159,7 +159,7 @@ function MessagesTab({ token }) {
                   <p className="text-xs text-slate-400">{row.email}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(row.created_at)}</p>
                 </div>
-                <p className="text-sm text-slate-600 truncate">{row.company || '—'}</p>
+                <p className="text-sm text-slate-600 truncate">{row.company || 'â'}</p>
                 <p className="text-sm text-slate-500 truncate cursor-pointer" onClick={() => setExp(expanded === row.id ? null : row.id)}>
                   {row.message}
                 </p>
@@ -215,7 +215,7 @@ function MessagesTab({ token }) {
   )
 }
 
-// ─── Demos / Trials tab ───────────────────────────────────────────────────────
+// âââ Demos / Trials tab âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function DemosTab({ token, source }) {
   const [rows, setRows]       = useState([])
   const [loading, setLoading] = useState(true)
@@ -254,7 +254,7 @@ function DemosTab({ token, source }) {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ id, status }),
     })
-    setBusy(null); notify(`Status → ${status}`); load()
+    setBusy(null); notify(`Status â ${status}`); load()
   }
   async function del(ids) {
     await fetch('/api/admin/demos', {
@@ -272,7 +272,7 @@ function DemosTab({ token, source }) {
         <div className="relative flex-1 min-w-[200px]">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input className="w-full pl-8 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            placeholder={`Search ${isDemo ? 'bookings' : 'trial requests'}…`}
+            placeholder={`Search ${isDemo ? 'bookings' : 'trial requests'}â¦`}
             value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         {selected.size > 0 && (
@@ -312,11 +312,11 @@ function DemosTab({ token, source }) {
                   <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(row.created_at)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-700">{row.company || '—'}</p>
-                  <p className="text-xs text-slate-400">{row.business_type || '—'}</p>
+                  <p className="text-sm text-slate-700">{row.company || 'â'}</p>
+                  <p className="text-xs text-slate-400">{row.business_type || 'â'}</p>
                 </div>
                 <p className="text-sm text-slate-500 truncate cursor-pointer" onClick={() => setExp(expanded === row.id ? null : row.id)}>
-                  {row.message || '—'}
+                  {row.message || 'â'}
                 </p>
                 <StatusBadge status={row.status} />
                 <div className="flex items-center gap-1 flex-wrap">
@@ -382,7 +382,7 @@ function DemosTab({ token, source }) {
   )
 }
 
-// ─── SMTP Status Panel (superadmin only) ─────────────────────────────────────
+// âââ SMTP Status Panel (superadmin only) âââââââââââââââââââââââââââââââââââââ
 function SmtpPanel({ token }) {
   const [result, setResult]   = useState(null)
   const [checking, setChecking] = useState(false)
@@ -416,7 +416,7 @@ function SmtpPanel({ token }) {
           className="flex items-center gap-1.5 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg
                      hover:bg-indigo-700 font-bold disabled:opacity-60 transition-colors">
           {checking ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-          {checking ? 'Checking…' : 'Test Connection'}
+          {checking ? 'Checkingâ¦' : 'Test Connection'}
         </button>
       </div>
       <div className="px-5 py-4">
@@ -425,10 +425,10 @@ function SmtpPanel({ token }) {
         ) : (
           <div className={`border rounded-lg px-4 py-3 text-sm ${statusColor[result.status] || statusColor.error}`}>
             <p className="font-bold mb-1">
-              {result.status === 'connected' ? '✅' : result.status === 'not_configured' ? '⚠️' : '❌'}&nbsp;
+              {result.status === 'connected' ? 'â' : result.status === 'not_configured' ? 'â ï¸' : 'â'}&nbsp;
               {result.msg}
             </p>
-            {result.provider && <p className="text-xs opacity-80">Provider: {result.provider} · User: {result.user} · From: {result.from}</p>}
+            {result.provider && <p className="text-xs opacity-80">Provider: {result.provider} Â· User: {result.user} Â· From: {result.from}</p>}
             {result.status === 'not_configured' && (
               <p className="text-xs mt-2 opacity-80">
                 Add <code className="bg-amber-100 px-1 rounded">SMTP_HOST</code>,&nbsp;
@@ -443,13 +443,13 @@ function SmtpPanel({ token }) {
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-500">
           <div className="bg-sky-50 border border-sky-100 rounded-lg p-3">
             <p className="font-bold text-sky-700 mb-1">Google Workspace</p>
-            <p>Host: <code>smtp.gmail.com</code> · Port: <code>587</code></p>
-            <p className="mt-1">Requires a 16-char <strong>App Password</strong> from Google Account → Security → App passwords.</p>
+            <p>Host: <code>smtp.gmail.com</code> Â· Port: <code>587</code></p>
+            <p className="mt-1">Requires a 16-char <strong>App Password</strong> from Google Account â Security â App passwords.</p>
           </div>
           <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3">
             <p className="font-bold text-indigo-700 mb-1">Zoho Mail</p>
-            <p>Host: <code>smtp.zoho.com</code> · Port: <code>587</code></p>
-            <p className="mt-1">Requires an <strong>App Password</strong> from Zoho Mail Settings → Security → App Passwords.</p>
+            <p>Host: <code>smtp.zoho.com</code> Â· Port: <code>587</code></p>
+            <p className="mt-1">Requires an <strong>App Password</strong> from Zoho Mail Settings â Security â App Passwords.</p>
           </div>
         </div>
       </div>
@@ -457,7 +457,7 @@ function SmtpPanel({ token }) {
   )
 }
 
-// ─── User Management tab (superadmin only) ─────────────────────────────────
+// âââ User Management tab (superadmin only) âââââââââââââââââââââââââââââââââ
 const ROLE_OPTIONS = ['ceo','cto','customer_success','product','engineering','operations','finance','people_ops']
 
 function UsersTab({ token }) {
@@ -496,7 +496,7 @@ function UsersTab({ token }) {
     if (d.ok) {
       setShowCreate(false)
       setForm({ name:'', email:'', role:'customer_success', company:'Gigva Kenya' })
-      notify('User created — welcome email sent')
+      notify('User created â welcome email sent')
       load()
     } else {
       notify(`Error: ${d.msg}`)
@@ -596,7 +596,7 @@ function UsersTab({ token }) {
             </div>
             <div className="sm:col-span-2">
               <p className="text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                ⚠️ Default password: <strong>blue1ocean</strong> — a welcome email with login details will be sent to the staff member.
+                â ï¸ Default password: <strong>blue1ocean</strong> â a welcome email with login details will be sent to the staff member.
               </p>
             </div>
             <div className="sm:col-span-2 flex gap-2">
@@ -674,7 +674,7 @@ function UsersTab({ token }) {
   )
 }
 
-// ─── Stat card ────────────────────────────────────────────────────────────────
+// âââ Stat card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function StatCard({ icon: Icon, label, value, color }) {
   return (
     <div className={`bg-white border rounded-xl px-5 py-4 flex items-center gap-4 shadow-sm ${color}`}>
@@ -689,11 +689,97 @@ function StatCard({ icon: Icon, label, value, color }) {
   )
 }
 
-// ── Inbox Tab ────────────────────────────────────────────────────────────────
+// ââ Inbox Tab ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Sent Tab ───────────────────────────────────────────────────────────────
+function SentTab({ token, user }) {
+  const [emails, setEmails]   = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState(null)
+  const [search, setSearch]   = useState('')
+
+  const h = { Authorization: `Bearer ${token}` }
+
+  useEffect(() => {
+    if (!token) return
+    fetch('/api/admin/sent', { headers: h })
+      .then(r => r.json())
+      .then(d => { setEmails(d.emails || []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [token])
+
+  const filtered = emails.filter(e => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return e.subject?.toLowerCase().includes(q) ||
+           e.to_email?.toLowerCase().includes(q) ||
+           e.from_email?.toLowerCase().includes(q) ||
+           e.body_text?.toLowerCase().includes(q)
+  })
+
+  if (loading) return (
+    <div className="flex justify-center items-center h-40">
+      <Loader2 className="animate-spin text-slate-400" size={24} />
+    </div>
+  )
+
+  return (
+    <div className="flex h-[calc(100vh-160px)]">
+      {/* List panel */}
+      <div className="w-72 border-r border-slate-200 bg-white flex flex-col flex-shrink-0">
+        <div className="p-3 border-b border-slate-100">
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5">
+            <Search size={13} className="text-slate-400 flex-shrink-0" />
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sent..." className="text-sm bg-transparent outline-none w-full placeholder-slate-400" />
+          </div>
+        </div>
+        <div className="overflow-y-auto flex-1">
+          {filtered.length === 0 ? (
+            <div className="p-6 text-center text-slate-400 text-sm">No sent emails yet</div>
+          ) : filtered.map(e => (
+            <button key={e.id} onClick={() => setSelected(e)}
+              className={`w-full text-left px-3 py-2.5 border-b border-slate-100 hover:bg-slate-50 transition-colors ${selected?.id === e.id ? 'bg-indigo-50 border-indigo-200' : ''}`}>
+              <div className="flex items-start justify-between gap-1">
+                <span className="font-medium text-slate-700 text-xs truncate">{e.to_email}</span>
+                <span className="text-[10px] text-slate-400 flex-shrink-0">{e.sent_at ? new Date(e.sent_at).toLocaleDateString('en-KE', { month: 'short', day: '2-digit' }) : ''}</span>
+              </div>
+              <p className="text-xs text-slate-500 truncate mt-0.5">{e.subject}</p>
+              <p className="text-[11px] text-slate-400 truncate mt-0.5">{e.body_text?.substring(0, 60)}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Detail panel */}
+      <div className="flex-1 overflow-y-auto bg-slate-50">
+        {!selected ? (
+          <div className="flex items-center justify-center h-full text-slate-400 text-sm">
+            <div className="text-center">
+              <Send size={32} className="mx-auto mb-2 opacity-40" />
+              <p>Select a sent email to view</p>
+            </div>
+          </div>
+        ) : (
+          <div className="p-6">
+            <h2 className="text-base font-bold text-slate-800 mb-3">{selected.subject}</h2>
+            <div className="flex gap-4 text-xs text-slate-500 mb-4 flex-wrap">
+              <span><span className="font-medium text-slate-600">From:</span> {selected.from_email}</span>
+              <span><span className="font-medium text-slate-600">To:</span> {selected.to_email}</span>
+              <span><span className="font-medium text-slate-600">Sent:</span> {selected.sent_at ? new Date(selected.sent_at).toLocaleString('en-KE') : '—'}</span>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+              {selected.body_text || selected.body_html?.replace(/<[^>]+>/g, '') || '(no content)'}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function InboxTab({ token, user }) {
     const [messages, setMessages]   = useState([])
     const [selected, setSelected]   = useState(null)
     const [loading,  setLoading]    = useState(true)
+    const [attachments, setAttachments] = useState([])
     const [search,   setSearch]     = useState('')
     const [replying,     setReplying]     = useState(false)
     const [replyText,    setReplyText]    = useState('')
@@ -734,14 +820,25 @@ function InboxTab({ token, user }) {
           })
     }
 
-    async function sendReply(messageId, replyText) {
+    async function sendReply(messageId, replyText, attachedFiles) {
       if (!replyText.trim()) return
       setReplyStatus('sending')
       try {
+        let body, headers = { ...h }
+        if (attachedFiles && attachedFiles.length > 0) {
+          const fd = new FormData()
+          fd.append('messageId', messageId)
+          fd.append('replyText', replyText)
+          attachedFiles.forEach(f => fd.append('attachments', f))
+          body = fd
+        } else {
+          headers['Content-Type'] = 'application/json'
+          body = JSON.stringify({ messageId, replyText })
+        }
         const res = await fetch('/api/admin/inbox/reply', {
           method: 'POST',
-          headers: { ...h, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messageId, replyText }),
+          headers,
+          body,
         })
         const data = await res.json()
         if (data.ok) {
@@ -882,7 +979,7 @@ function InboxTab({ token, user }) {
                             </div>
                             <div className="flex flex-col items-end gap-1 shrink-0">
                               <p className="text-xs text-slate-400">{msg.created_at ? new Date(msg.created_at).toLocaleDateString() : ''}</p>
-                              {msg.replied && <span className="text-xs text-green-600">✓ replied</span>}
+                              {msg.replied && <span className="text-xs text-green-600">â replied</span>}
                               {!msg.is_read && <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block" />}
                             </div>
                           </div>
@@ -905,7 +1002,7 @@ function InboxTab({ token, user }) {
                                 <p className="text-sm text-slate-500 mt-0.5">
                                   From: {selected.from_name ? `${selected.from_name} <${selected.from_email}>` : selected.from_email}
 </p>
-                    <p className="text-xs text-slate-400 mt-0.5">To: {selected.to_email} · {fmtDate(selected.created_at)}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">To: {selected.to_email} Â· {fmtDate(selected.created_at)}</p>
   </div>
                   <button onClick={() => setReplying(r => !r)}
                     className="flex items-center gap-1 p-1.5 rounded-lg hover:bg-indigo-50 text-indigo-400 hover:text-indigo-600 transition-colors"
@@ -926,7 +1023,7 @@ function InboxTab({ token, user }) {
                     ) : selected.body_text ? (
                       <pre className="whitespace-pre-wrap text-sm text-slate-700 font-sans">{selected.body_text}</pre>
                     ) : (
-                      <p className="text-sm text-slate-400 italic">Email body not available — message subject: {selected.subject}</p>
+                      <p className="text-sm text-slate-400 italic">Email body not available â message subject: {selected.subject}</p>
                     )}
                     {/* Staff reply (if any) */}
                     {selected.reply_text && (
@@ -949,6 +1046,19 @@ function InboxTab({ token, user }) {
                       placeholder="Type your reply..."
                       className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
                     />
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <label className="flex items-center gap-1 cursor-pointer text-xs text-slate-500 hover:text-indigo-600 px-2 py-1 border border-slate-200 rounded-lg hover:border-indigo-300 transition-colors">
+                        <Paperclip size={13} />
+                        <span>Attach files</span>
+                        <input type="file" multiple className="hidden" onChange={e => setAttachments(Array.from(e.target.files))} />
+                      </label>
+                      {attachments.map((f, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                          {f.name}
+                          <button onClick={() => setAttachments(p => p.filter((_, j) => j !== i))} className="hover:text-red-500 font-bold">×</button>
+                        </span>
+                      ))}
+                    </div>
                     <div className="flex items-center justify-between mt-2">
                       <div>
                         {replyStatus && (
@@ -962,7 +1072,7 @@ function InboxTab({ token, user }) {
                           className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                           Cancel
                         </button>
-                        <button onClick={() => sendReply(selected.id, replyText)}
+                        <button onClick={() => { sendReply(selected.id, replyText, attachments); setAttachments([]) }}
                           disabled={!replyText.trim() || replyStatus === 'sending'}
                           className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center gap-1">
                           <MessageSquareReply size={12} /> Send Reply
@@ -985,7 +1095,7 @@ function InboxTab({ token, user }) {
   )
 }
 
-// ─── Webmail button ───────────────────────────────────────────────────────────
+// âââ Webmail button âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function WebmailButton({ email }) {
   const webmailUrl = process.env.NEXT_PUBLIC_WEBMAIL_URL || 'https://mail.google.com'
   return (
@@ -1004,13 +1114,14 @@ function WebmailButton({ email }) {
   )
 }
 
-// ─── Main dashboard ───────────────────────────────────────────────────────────
+// âââ Main dashboard âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const ALL_TABS = [
   { id: 'messages', label: 'Messages',           icon: Mail     },
   { id: 'demos',    label: 'Demo Bookings',       icon: Calendar },
   { id: 'trials',   label: 'Free Trial Requests', icon: Zap      },
   { id: 'users',    label: 'User Management',     icon: Users    },
   { id: 'inbox',   label: 'Inbox',            icon: MailOpen },
+  { id: 'sent', label: 'Sent', icon: Send },
 ]
 
 export default function AdminDashboard() {
@@ -1021,7 +1132,7 @@ export default function AdminDashboard() {
   const [tab, setTab]             = useState(null)
   const [counts, setCounts]       = useState({ messages: 0, demos: 0, trials: 0, users: 0, inbox: 0  })
 
-  // ── Auth check ─────────────────────────────────────────────────────────────
+  // ââ Auth check âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   useEffect(() => {
     const t = typeof window !== 'undefined' ? localStorage.getItem('gigva_token') : null
     if (!t) { router.replace('/admin/login'); return }
@@ -1046,7 +1157,7 @@ export default function AdminDashboard() {
     }
   }, [router])
 
-  // ── Load counts ─────────────────────────────────────────────────────────────
+  // ââ Load counts âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   useEffect(() => {
     if (!token) return
     const h = { Authorization: `Bearer ${token}` }
@@ -1168,7 +1279,8 @@ export default function AdminDashboard() {
             {tab === 'demos'    && <DemosTab   token={token} source="demo"  />}
             {tab === 'trials'   && <DemosTab   token={token} source="trial" />}
             {tab === 'users'    && user.is_admin && <UsersTab token={token} />}
-             {tab === 'inbox'   && <InboxTab token={token} user={user} />}
+             {tab === 'inbox'   && <InboxTab token={token} user={user}
+              {tab === 'sent'  && <SentTab  token={token} user={user} />} />}
             {tab === 'users'    && !user.is_admin && (
               <div className="flex items-center gap-3 text-slate-500 py-8">
                 <AlertCircle size={20} /> <p>User management requires superadmin access.</p>
