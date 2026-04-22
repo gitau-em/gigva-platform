@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigvakenya.co.ke'
+const BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'
 
 export default function robots() {
   return {
@@ -6,9 +6,10 @@ export default function robots() {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/data/'],
+        disallow: ['/api/', '/data/', '/admin/'],
       },
     ],
     sitemap: `${BASE}/sitemap.xml`,
+    host: BASE,
   }
 }
