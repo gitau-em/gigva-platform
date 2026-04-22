@@ -12,7 +12,7 @@ const SECTIONS = [
     content: [
       `These Terms of Service ("Terms") constitute a binding legal agreement between you ("you", "your", or "the Customer") and Gigva Kenya Limited ("Gigva", "we", "us", or "our"), a company registered in Kenya.`,
       `By creating a Gigva account, clicking "I agree", or using the Gigva platform in any capacity, you confirm that you have read, understood, and agree to be bound by these Terms. If you are using Gigva on behalf of a business or organisation, you confirm that you have authority to bind that entity to these Terms, and that your acceptance is on behalf of that entity.`,
-      `If you do not agree to these Terms, you may not create an account or use the platform. We recommend that you read these Terms in full before proceeding. If any part is unclear, contact us at legal@gigvakenya.co.ke before creating an account.`,
+      `If you do not agree to these Terms, you may not create an account or use the platform. We recommend that you read these Terms in full before proceeding. If any part is unclear, contact us at hello@gigva.co.ke before creating an account.`,
       `These Terms were last updated on 1 January 2026 and supersede all previous versions.`,
     ],
   },
@@ -41,7 +41,7 @@ const SECTIONS = [
     content: [
       `To use the Gigva platform, you must create an account by providing accurate and complete information, including your name, email address, and business details. You are responsible for keeping your account information accurate and up to date.`,
       `You are responsible for maintaining the confidentiality of your login credentials and for all activity that occurs under your account. You must not share your login credentials with any person who is not an authorised user of your account. If you wish to give team members access, use the account's user management function to add them with appropriate permission levels.`,
-      `If you suspect that your account has been accessed without authorisation, or that your credentials have been compromised, you must notify us immediately at security@gigvakenya.co.ke and change your password. Gigva is not liable for losses arising from your failure to secure your credentials.`,
+      `If you suspect that your account has been accessed without authorisation, or that your credentials have been compromised, you must notify us immediately at hello@gigva.co.ke and change your password. Gigva is not liable for losses arising from your failure to secure your credentials.`,
       `You must be at least 18 years old and legally capable of entering into contracts under Kenyan law to create a Gigva account.`,
     ],
   },
@@ -163,7 +163,7 @@ const SECTIONS = [
     heading: '12. Governing law and dispute resolution',
     content: [
       `These Terms are governed by and construed in accordance with the laws of the Republic of Kenya. Any disputes arising out of or in connection with these Terms — including disputes about their formation, validity, or termination — will be resolved under Kenyan law.`,
-      `Before initiating formal proceedings, both parties agree to attempt to resolve any dispute through good-faith negotiation for a period of 30 days from the date one party notifies the other of the dispute in writing. To initiate this process, email legal@gigvakenya.co.ke with a written description of the dispute and your proposed resolution.`,
+      `Before initiating formal proceedings, both parties agree to attempt to resolve any dispute through good-faith negotiation for a period of 30 days from the date one party notifies the other of the dispute in writing. To initiate this process, email hello@gigva.co.ke with a written description of the dispute and your proposed resolution.`,
       `If the dispute cannot be resolved through negotiation within 30 days, it will be submitted to the jurisdiction of the courts of Kenya. Both parties consent to the exclusive jurisdiction of the Kenyan courts for the resolution of disputes arising under these Terms.`,
       `Nothing in this clause prevents either party from seeking emergency injunctive or interim relief from a Kenyan court where necessary to protect confidential information, intellectual property rights, or other legitimate interests pending resolution of a dispute.`,
     ],
@@ -193,10 +193,8 @@ const SECTIONS = [
     heading: '15. Contact',
     content: [
       `For questions about these Terms, contact us at:`,
-      `Email: legal@gigvakenya.co.ke`,
+      `Email: hello@gigva.co.ke`,
       `Post: Gigva Kenya Limited, Westlands, Nairobi, Kenya`,
-      `For security issues: security@gigvakenya.co.ke`,
-      `For privacy and data questions: privacy@gigvakenya.co.ke`,
     ],
   },
 ]
@@ -212,8 +210,8 @@ export default function TermsPage() {
           <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed">
             Please read these Terms carefully before creating a Gigva account. By using the platform,
             you agree to be bound by these Terms. If you have questions, email us at{' '}
-            <a href="mailto:legal@gigvakenya.co.ke" className="text-sky-600 hover:underline font-medium">
-              legal@gigvakenya.co.ke
+            <a href="mailto:hello@gigva.co.ke" className="text-sky-600 hover:underline font-medium">
+              hello@gigva.co.ke
             </a>{' '}
             before proceeding.
           </div>
@@ -264,8 +262,8 @@ export default function TermsPage() {
         <div className="mt-12 pt-8 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
             Questions about these Terms?{' '}
-            <a href="mailto:legal@gigvakenya.co.ke" className="text-sky-600 hover:underline">
-              legal@gigvakenya.co.ke
+            <a href="mailto:hello@gigva.co.ke" className="text-sky-600 hover:underline">
+              hello@gigva.co.ke
             </a>
             {' '}·{' '}
             <Link href="/privacy" className="text-sky-600 hover:underline">Privacy Policy</Link>
