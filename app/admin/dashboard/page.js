@@ -6,7 +6,7 @@ import {
   MessageSquareReply, CheckCircle2, XCircle, PhoneCall,
   Loader2, ChevronDown, ChevronUp, Search, Users,
   ShieldCheck, ExternalLink, PlusCircle, UserX, Key,
-  AlertCircle, Building2, UserCog, MailOpen
+  AlertCircle, Building2, UserCog, MailOpen, X, PenSquare
 } from 'lucide-react'
 import { ROLES } from '@/lib/roleConfig'
 
@@ -691,12 +691,211 @@ function StatCard({ icon: Icon, label, value, color }) {
 
 // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Inbox Tab ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ Sent Tab Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+
+// ─── ComposeModal ─────────────────────────────────────────────────────────────
+function ComposeModal({ token, user, onClose, onSent }) {
+  const [to,        setTo]        = useState('')
+  const [cc,        setCc]        = useState('')
+  const [bcc,       setBcc]       = useState('')
+  const [subject,   setSubject]   = useState('')
+  const [bodyText,  setBodyText]  = useState('')
+  const [files,     setFiles]     = useState([])
+  const [status,    setStatus]    = useState(null) // null | 'sending' | 'sent' | string(error)
+  const [showCcBcc, setShowCcBcc] = useState(false)
+  const MAX_MB = 25
+
+  function handleFiles(e) {
+    const chosen = Array.from(e.target.files || [])
+    const total = [...files, ...chosen].reduce((sum, f) => sum + f.size, 0)
+    if (total > MAX_MB * 1024 * 1024) {
+      setStatus('Total attachments exceed ' + MAX_MB + ' MB limit')
+      return
+    }
+    setFiles(prev => [...prev, ...chosen])
+  }
+
+  function removeFile(idx) {
+    setFiles(prev => prev.filter((_, i) => i !== idx))
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024)       return bytes + ' B'
+    if (bytes < 1048576)    return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / 1048576).toFixed(1) + ' MB'
+  }
+
+  async function handleSend() {
+    if (!to.trim())       { setStatus('Recipient (To) is required'); return }
+    if (!subject.trim())  { setStatus('Subject is required'); return }
+    if (!bodyText.trim()) { setStatus('Message body is required'); return }
+    setStatus('sending')
+    try {
+      let body, headers = { Authorization: `Bearer ${token}` }
+      if (files.length > 0) {
+        const fd = new FormData()
+        fd.append('to', to)
+        fd.append('cc', cc)
+        fd.append('bcc', bcc)
+        fd.append('subject', subject)
+        fd.append('bodyText', bodyText)
+        files.forEach(f => fd.append('attachments', f))
+        body = fd
+      } else {
+        headers['Content-Type'] = 'application/json'
+        body = JSON.stringify({ to, cc, bcc, subject, bodyText })
+      }
+      const res  = await fetch('/api/admin/inbox/compose', { method: 'POST', headers, body })
+      const data = await res.json()
+      if (data.ok) {
+        setStatus('sent')
+        if (onSent) onSent()
+        setTimeout(() => onClose(), 1500)
+      } else {
+        setStatus(data.msg || 'Failed to send')
+      }
+    } catch (err) {
+      setStatus(err.message || 'Network error')
+    }
+  }
+
+  const totalSize = files.reduce((s, f) => s + f.size, 0)
+  const overLimit = totalSize > MAX_MB * 1024 * 1024
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <PenSquare size={18} className="text-blue-600" />
+            <span className="font-semibold text-slate-800">New Email</span>
+            <span className="text-xs text-slate-400">from {user.email}</span>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Fields */}
+        <div className="flex flex-col divide-y divide-slate-100 overflow-y-auto flex-1">
+          {/* To */}
+          <div className="flex items-center px-5 py-2.5 gap-3">
+            <span className="text-xs font-medium text-slate-500 w-10 flex-shrink-0">To</span>
+            <input
+              className="flex-1 text-sm text-slate-800 placeholder-slate-400 outline-none"
+              placeholder="Recipients (comma-separated)"
+              value={to} onChange={e => setTo(e.target.value)}
+            />
+            <button onClick={() => setShowCcBcc(v => !v)} className="text-xs text-blue-500 hover:text-blue-700 flex-shrink-0">
+              {showCcBcc ? 'Hide' : 'Cc/Bcc'}
+            </button>
+          </div>
+
+          {/* CC / BCC */}
+          {showCcBcc && (
+            <>
+              <div className="flex items-center px-5 py-2.5 gap-3">
+                <span className="text-xs font-medium text-slate-500 w-10 flex-shrink-0">Cc</span>
+                <input
+                  className="flex-1 text-sm text-slate-800 placeholder-slate-400 outline-none"
+                  placeholder="Cc recipients (comma-separated)"
+                  value={cc} onChange={e => setCc(e.target.value)}
+                />
+              </div>
+              <div className="flex items-center px-5 py-2.5 gap-3">
+                <span className="text-xs font-medium text-slate-500 w-10 flex-shrink-0">Bcc</span>
+                <input
+                  className="flex-1 text-sm text-slate-800 placeholder-slate-400 outline-none"
+                  placeholder="Bcc recipients (comma-separated)"
+                  value={bcc} onChange={e => setBcc(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Subject */}
+          <div className="flex items-center px-5 py-2.5 gap-3">
+            <span className="text-xs font-medium text-slate-500 w-10 flex-shrink-0">Sub</span>
+            <input
+              className="flex-1 text-sm text-slate-800 placeholder-slate-400 outline-none font-medium"
+              placeholder="Subject"
+              value={subject} onChange={e => setSubject(e.target.value)}
+            />
+          </div>
+
+          {/* Body */}
+          <div className="px-5 py-3 flex-1 min-h-[200px]">
+            <textarea
+              className="w-full h-full min-h-[200px] text-sm text-slate-800 placeholder-slate-400 outline-none resize-none"
+              placeholder="Write your message here..."
+              value={bodyText} onChange={e => setBodyText(e.target.value)}
+            />
+          </div>
+
+          {/* Attachments list */}
+          {files.length > 0 && (
+            <div className="px-5 py-3 bg-slate-50">
+              <p className="text-xs font-medium text-slate-500 mb-2">
+                Attachments · {formatSize(totalSize)} / {MAX_MB} MB
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {files.map((f, i) => (
+                  <div key={i} className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700">
+                    <Paperclip size={11} className="text-slate-400" />
+                    <span className="max-w-[140px] truncate">{f.name}</span>
+                    <span className="text-slate-400">({formatSize(f.size)})</span>
+                    <button onClick={() => removeFile(i)} className="text-slate-400 hover:text-red-500 ml-1">
+                      <X size={11} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {overLimit && <p className="text-xs text-red-500 mt-1">Total size exceeds {MAX_MB} MB limit</p>}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-white rounded-b-2xl">
+          <label className="flex items-center gap-1.5 cursor-pointer text-slate-500 hover:text-blue-600 transition-colors">
+            <Paperclip size={16} />
+            <span className="text-xs font-medium">Attach file</span>
+            <input type="file" multiple className="hidden" onChange={handleFiles} />
+          </label>
+
+          <div className="flex items-center gap-3">
+            {status && status !== 'sending' && status !== 'sent' && (
+              <p className="text-xs text-red-500 max-w-[200px] truncate">{status}</p>
+            )}
+            {status === 'sent' && <p className="text-xs text-green-600 font-medium">Sent!</p>}
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              Discard
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={status === 'sending' || overLimit}
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {status === 'sending' ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+              {status === 'sending' ? 'Sending…' : 'Send'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SentTab({ token, user }) {
   const [emails, setEmails]   = useState([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
   const [search, setSearch]   = useState('')
   const [checkedSent, setCheckedSent] = useState(new Set())
+  const [composing,   setComposing]   = useState(false)
 
   const h = { Authorization: `Bearer ${token}` }
 
@@ -724,6 +923,19 @@ function SentTab({ token, user }) {
   )
 
   return (
+    <>
+    {composing && (
+      <ComposeModal
+        token={token}
+        user={user}
+        onClose={() => setComposing(false)}
+        onSent={() => {
+          fetch('/api/admin/sent', { headers: h })
+            .then(r => r.json())
+            .then(d => setEmails(d.emails || []))
+        }}
+      />
+    )}
     <div className="flex h-[calc(100vh-160px)]">
       {/* List panel */}
       <div className="w-72 border-r border-slate-200 bg-white flex flex-col flex-shrink-0">
@@ -732,6 +944,12 @@ function SentTab({ token, user }) {
             <Search size={13} className="text-slate-400 flex-shrink-0" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sent..." className="text-sm bg-transparent outline-none w-full placeholder-slate-400" />
           </div>
+          <button
+            onClick={() => setComposing(true)}
+            className="mt-2 flex items-center justify-center gap-1.5 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg py-1.5 transition-colors"
+          >
+            <PenSquare size={13} /> Compose
+          </button>
         </div>
         {checkedSent.size > 0 && (
           <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border-b border-red-200">
@@ -796,6 +1014,7 @@ function SentTab({ token, user }) {
         )}
       </div>
     </div>
+    </>
   )
 }
 
@@ -810,6 +1029,7 @@ function InboxTab({ token, user }) {
     const [replyStatus,  setReplyStatus]  = useState(null)
     const [expandedSender, setExpandedSender] = useState(null)
     const [checkedInbox, setCheckedInbox] = useState(new Set())
+    const [composing,    setComposing]    = useState(false)
 
     const h = { Authorization: `Bearer ${token}` }
 
@@ -913,6 +1133,15 @@ function InboxTab({ token, user }) {
     const unread = messages.filter(m => !m.is_read).length
 
     return (
+    <>
+    {composing && (
+      <ComposeModal
+        token={token}
+        user={user}
+        onClose={() => setComposing(false)}
+        onSent={() => load()}
+      />
+    )}
           <div className="space-y-4">
     {/* Header */}
         <div className="flex items-center justify-between">
@@ -931,7 +1160,7 @@ function InboxTab({ token, user }) {
             </button>
             </div>
 
-{/* Search */}
+{/* Search + Compose */}
       <div className="relative">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -940,6 +1169,12 @@ function InboxTab({ token, user }) {
           className="w-full pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
             </div>
+            <button
+              onClick={() => setComposing(true)}
+              className="mt-2 flex items-center justify-center gap-1.5 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg py-1.5 transition-colors"
+            >
+              <PenSquare size={13} /> Compose
+            </button>
 
 {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -1148,6 +1383,7 @@ function InboxTab({ token, user }) {
               </div>
       )}
         </div>
+    </>
   )
 }
 
