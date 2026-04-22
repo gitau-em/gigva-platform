@@ -18,7 +18,7 @@ export default function SocialProof() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
           {[
             { val: '2012',    lbl: 'Founded in Nairobi' },
-            { val: '3 months', lbl: 'Free to start' },
+            { val: '30 days', lbl: 'Free to start' },
             { val: 'Daraja v2', lbl: 'M-Pesa integration' },
             { val: 'Kenya',   lbl: 'Where data is hosted' },
           ].map(({ val, lbl }) => (
