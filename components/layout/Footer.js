@@ -7,7 +7,6 @@ const COLS = [
       { href: '/product',   label: 'Product overview' },
       { href: '/features',  label: 'Features'         },
       { href: '/pricing',   label: 'Pricing'          },
-      { href: '/trial',     label: 'Start free trial' },
     ],
   },
   {
@@ -24,7 +23,6 @@ const COLS = [
     links: [
       { href: '/about',     label: 'About us'  },
       { href: '/security',  label: 'Security'  },
-      { href: '/book-demo', label: 'Book a demo' },
       { href: '/contact',   label: 'Contact'   },
     ],
   },
@@ -64,10 +62,10 @@ export default function Footer() {
             <div className="space-y-1 text-xs text-slate-600">
               <div>Westlands Business Park, Nairobi</div>
               <a
-                href="mailto:hello@gigvakenya.co.ke"
+                href="mailto:hello@gigva.co.ke"
                 className="text-slate-500 hover:text-sky-400 transition-colors"
               >
-                hello@gigvakenya.co.ke
+                hello@gigva.co.ke
               </a>
             </div>
           </div>
