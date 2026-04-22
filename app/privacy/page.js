@@ -10,7 +10,7 @@ const SECTIONS = [
     id: '1',
     heading: '1. Introduction and who we are',
     content: [
-      `Gigva Kenya Limited ("Gigva", "we", "us", or "our") is a software company registered in Kenya. We operate the Gigva platform, accessible at gigvakenya.co.ke and its subdomains, which provides M-Pesa payment tracking, automated reconciliation, analytics, and related services to Kenyan small and medium businesses.`,
+      `Gigva Kenya Limited ("Gigva", "we", "us", or "our") is a software company registered in Kenya. We operate the Gigva platform, accessible at gigva.co.ke and its subdomains, which provides M-Pesa payment tracking, automated reconciliation, analytics, and related services to Kenyan small and medium businesses.`,
       `This Privacy Policy explains what personal and business data we collect when you use the Gigva platform, how we use that data, how we store and protect it, and what rights you have under the Kenya Data Protection Act 2019 (DPA 2019). It applies to all users of the Gigva platform, including account holders, authorised team members added to an account, and visitors to our website.`,
       `By creating a Gigva account or using the platform in any capacity, you confirm that you have read and understood this Privacy Policy. If you are using Gigva on behalf of a business, you confirm that you have authority to agree to this policy on that business's behalf.`,
     ],
@@ -244,7 +244,7 @@ export default function PrivacyPage() {
           <h1 className="text-3xl font-display text-slate-900 mb-2">Privacy Policy</h1>
           <p className="text-sm text-slate-500 mb-4">Last updated: 1 January 2026</p>
           <div className="bg-sky-50 border border-sky-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed">
-            This Privacy Policy applies to all users of the Gigva platform (gigvakenya.co.ke).
+            This Privacy Policy applies to all users of the Gigva platform (gigva.co.ke).
             It is written to be read — not to be hidden. If any part of this policy is unclear,
             email us at{' '}
             <a href="mailto:hello@gigva.co.ke" className="text-sky-600 hover:underline font-medium">
