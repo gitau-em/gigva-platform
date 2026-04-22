@@ -169,7 +169,7 @@ const SECTIONS = [
       { label: 'Right to withdraw consent', detail: 'Where processing is based on consent, you may withdraw it at any time without affecting the lawfulness of prior processing.' },
     ],
     content2: [
-      `To exercise any of these rights, email privacy@gigvakenya.co.ke with the subject line "Data Rights Request" and a description of your request. We will respond within 21 days. We may ask you to verify your identity before processing the request.`,
+      `To exercise any of these rights, email hello@gigva.co.ke with the subject line "Data Rights Request" and a description of your request. We will respond within 21 days. We may ask you to verify your identity before processing the request.`,
       `If you are not satisfied with our response, you have the right to lodge a complaint with the Office of the Data Protection Commissioner of Kenya (ODPC).`,
     ],
   },
@@ -228,7 +228,7 @@ const SECTIONS = [
     heading: '12. Contact for privacy concerns',
     content: [
       `If you have questions, concerns, or requests relating to this Privacy Policy or Gigva's data handling practices, contact us at:`,
-      `Email: privacy@gigvakenya.co.ke`,
+      `Email: hello@gigva.co.ke`,
       `Post: Gigva Kenya Limited, Westlands, Nairobi, Kenya`,
       `We aim to respond to all privacy enquiries within 5 business days and to resolve substantive requests within 21 days. If you are not satisfied with our response, you may escalate to the Office of the Data Protection Commissioner of Kenya.`,
     ],
@@ -247,8 +247,8 @@ export default function PrivacyPage() {
             This Privacy Policy applies to all users of the Gigva platform (gigvakenya.co.ke).
             It is written to be read — not to be hidden. If any part of this policy is unclear,
             email us at{' '}
-            <a href="mailto:privacy@gigvakenya.co.ke" className="text-sky-600 hover:underline font-medium">
-              privacy@gigvakenya.co.ke
+            <a href="mailto:hello@gigva.co.ke" className="text-sky-600 hover:underline font-medium">
+              hello@gigva.co.ke
             </a>
             {' '}and we will explain it plainly.
           </div>
@@ -327,8 +327,8 @@ export default function PrivacyPage() {
         <div className="mt-12 pt-8 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-500">
             Questions about this policy?{' '}
-            <a href="mailto:privacy@gigvakenya.co.ke" className="text-sky-600 hover:underline">
-              privacy@gigvakenya.co.ke
+            <a href="mailto:hello@gigva.co.ke" className="text-sky-600 hover:underline">
+              hello@gigva.co.ke
             </a>
             {' '}·{' '}
             <Link href="/terms" className="text-sky-600 hover:underline">Terms of Service</Link>
