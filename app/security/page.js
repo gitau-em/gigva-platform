@@ -155,27 +155,6 @@ export default function SecurityPage() {
             security team directly. We take every report seriously, investigate promptly, and
             aim to communicate resolution timelines within 48 hours of receiving a valid report.
           </p>
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-800 mb-1">Security contact</p>
-                <a
-                  href="mailto:security@gigvakenya.co.ke"
-                  className="text-sky-600 hover:underline text-sm font-medium"
-                >
-                  security@gigvakenya.co.ke
-                </a>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {['No public disclosure before fix', 'Acknowledge within 48 hrs', 'Fix timeline communicated'].map(p => (
-                  <div key={p} className="flex items-center gap-1.5 text-xs text-slate-600 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5">
-                    <CheckCircle2 size={11} className="text-emerald-500 flex-shrink-0" />
-                    {p}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
