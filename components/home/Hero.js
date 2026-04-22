@@ -22,7 +22,7 @@ export default function Hero() {
             {/* Stage pill */}
             <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-              Free for your first 3 months — no credit card
+              Free for your first 30 days — no credit card
             </div>
 
             <h1 className="font-display font-bold text-4xl md:text-5xl text-slate-900 leading-[1.08] mb-5">
