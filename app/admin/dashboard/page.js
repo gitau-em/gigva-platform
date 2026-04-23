@@ -1641,10 +1641,16 @@ function PayrollTab({ token, user }) {
       await fetch('/api/admin/payroll/setup', { method: 'POST', headers: hdr })
       const r = await fetch('/api/admin/payroll/staff', { headers: hdr })
       const d = await r.json()
-      if (d.ok) setEmployees(d.employees || [])
-      else {
-        // Seed current staff if empty
-        setEmployees([])
+      if (d.ok) {
+        if ((d.employees || []).length === 0) {
+          // Seed initial staff
+          await fetch('/api/admin/payroll/seed', { method: 'POST', headers: hdr })
+          const r2 = await fetch('/api/admin/payroll/staff', { headers: hdr })
+          const d2 = await r2.json()
+          if (d2.ok) setEmployees(d2.employees || [])
+        } else {
+          setEmployees(d.employees)
+        }
       }
     } catch(e) { setMsg('Error loading employees') }
     setLoading(false)
