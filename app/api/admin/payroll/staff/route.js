@@ -1,95 +1,77 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import jwt from 'jsonwebtoken'
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
-const JWT_SECRET = process.env.JWT_SECRET
-
-function verifyToken(req) {
-  const auth = req.headers.get('authorization') || ''
-  const token = auth.replace('Bearer ', '')
-  if (!token) return null
-  try { return jwt.verify(token, JWT_SECRET) } catch { return null }
-}
+import { verifyToken } from '@/lib/auth'
+import { db } from '@/lib/db'
 
 function checkAccess(user) {
   return user && ['cto','people_ops','superadmin'].includes(user.role)
 }
 
-// GET - list all payroll employees
 export async function GET(req) {
-  const user = verifyToken(req)
+  const auth = req.headers.get('authorization') || ''
+  const user = verifyToken(auth.replace('Bearer ','').trim())
   if (!user || !checkAccess(user)) return NextResponse.json({ ok: false, msg: 'Access denied' }, { status: 403 })
-  const { data, error } = await supabase
-    .from('payroll_employees')
-    .select('*')
-    .order('name')
-  if (error) return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, employees: data })
+  try {
+    const employees = db().prepare('SELECT * FROM payroll_employees ORDER BY name').all()
+    return NextResponse.json({ ok: true, employees })
+  } catch(e) { return NextResponse.json({ ok: false, msg: e.message }, { status: 500 }) }
 }
 
-// POST - create new payroll employee
 export async function POST(req) {
-  const user = verifyToken(req)
+  const auth = req.headers.get('authorization') || ''
+  const user = verifyToken(auth.replace('Bearer ','').trim())
   if (!user || !checkAccess(user)) return NextResponse.json({ ok: false, msg: 'Access denied' }, { status: 403 })
-  const body = await req.json()
-  const { data, error } = await supabase
-    .from('payroll_employees')
-    .insert([{
-      name: body.name,
-      employee_id: body.employee_id,
-      department: body.department,
-      designation: body.designation,
-      email: body.email,
-      phone: body.phone,
-      address: body.address,
-      date_employed: body.date_employed || null,
-      marital_status: body.marital_status || 'Single',
-      id_number: body.id_number,
-      bank_name: body.bank_name,
-      bank_account: body.bank_account,
-      bank_code: body.bank_code,
-      basic_pay: parseFloat(body.basic_pay) || 0,
-      house_allowance: parseFloat(body.house_allowance) || 0,
-      car_benefit: parseFloat(body.car_benefit) || 0,
-      other_allowances: parseFloat(body.other_allowances) || 0,
-      is_active: true,
-    }])
-    .select()
-    .single()
-  if (error) return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, employee: data })
+  try {
+    const b = await req.json()
+    const now = new Date().toISOString()
+    const result = db().prepare(`INSERT INTO payroll_employees 
+      (name, employee_id, department, designation, email, phone, address, date_employed, marital_status, id_number,
+       bank_name, bank_account, bank_code, basic_pay, house_allowance, car_benefit, other_allowances, is_active, created_at, updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)`)
+      .run(b.name, b.employee_id||null, b.department||'', b.designation||'', b.email, b.phone||'',
+           b.address||'', b.date_employed||'', b.marital_status||'Single', b.id_number||'',
+           b.bank_name||'', b.bank_account||'', b.bank_code||'',
+           parseFloat(b.basic_pay)||0, parseFloat(b.house_allowance)||0,
+           parseFloat(b.car_benefit)||0, parseFloat(b.other_allowances)||0, now, now)
+    const employee = db().prepare('SELECT * FROM payroll_employees WHERE rowid=?').get(result.lastInsertRowid)
+    return NextResponse.json({ ok: true, employee })
+  } catch(e) { return NextResponse.json({ ok: false, msg: e.message }, { status: 500 }) }
 }
 
-// PUT - update payroll employee
 export async function PUT(req) {
-  const user = verifyToken(req)
+  const auth = req.headers.get('authorization') || ''
+  const user = verifyToken(auth.replace('Bearer ','').trim())
   if (!user || !checkAccess(user)) return NextResponse.json({ ok: false, msg: 'Access denied' }, { status: 403 })
-  const body = await req.json()
-  const { id, ...fields } = body
-  if (!id) return NextResponse.json({ ok: false, msg: 'ID required' }, { status: 400 })
-  const updateData = {}
-  const allowed = ['name','employee_id','department','designation','email','phone','address',
-    'date_employed','marital_status','id_number','bank_name','bank_account','bank_code',
-    'basic_pay','house_allowance','car_benefit','other_allowances','is_active']
-  allowed.forEach(k => { if (fields[k] !== undefined) updateData[k] = fields[k] })
-  updateData.updated_at = new Date().toISOString()
-  const { data, error } = await supabase.from('payroll_employees').update(updateData).eq('id', id).select().single()
-  if (error) return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, employee: data })
+  try {
+    const b = await req.json()
+    const { id, ...fields } = b
+    if (!id) return NextResponse.json({ ok: false, msg: 'ID required' }, { status: 400 })
+    const now = new Date().toISOString()
+    db().prepare(`UPDATE payroll_employees SET
+      name=?, employee_id=?, department=?, designation=?, email=?, phone=?, address=?,
+      date_employed=?, marital_status=?, id_number=?, bank_name=?, bank_account=?, bank_code=?,
+      basic_pay=?, house_allowance=?, car_benefit=?, other_allowances=?, is_active=?, updated_at=?
+      WHERE id=?`)
+      .run(fields.name||'', fields.employee_id||null, fields.department||'', fields.designation||'',
+           fields.email||'', fields.phone||'', fields.address||'', fields.date_employed||'',
+           fields.marital_status||'Single', fields.id_number||'', fields.bank_name||'',
+           fields.bank_account||'', fields.bank_code||'',
+           parseFloat(fields.basic_pay)||0, parseFloat(fields.house_allowance)||0,
+           parseFloat(fields.car_benefit)||0, parseFloat(fields.other_allowances)||0,
+           fields.is_active !== false ? 1 : 0, now, id)
+    const employee = db().prepare('SELECT * FROM payroll_employees WHERE id=?').get(id)
+    return NextResponse.json({ ok: true, employee })
+  } catch(e) { return NextResponse.json({ ok: false, msg: e.message }, { status: 500 }) }
 }
 
-// DELETE - deactivate employee
 export async function DELETE(req) {
-  const user = verifyToken(req)
+  const auth = req.headers.get('authorization') || ''
+  const user = verifyToken(auth.replace('Bearer ','').trim())
   if (!user || !checkAccess(user)) return NextResponse.json({ ok: false, msg: 'Access denied' }, { status: 403 })
-  const { searchParams } = new URL(req.url)
-  const id = searchParams.get('id')
-  if (!id) return NextResponse.json({ ok: false, msg: 'ID required' }, { status: 400 })
-  const { error } = await supabase.from('payroll_employees').update({ is_active: false }).eq('id', id)
-  if (error) return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  try {
+    const { searchParams } = new URL(req.url)
+    const id = searchParams.get('id')
+    if (!id) return NextResponse.json({ ok: false, msg: 'ID required' }, { status: 400 })
+    db().prepare('UPDATE payroll_employees SET is_active=0 WHERE id=?').run(id)
+    return NextResponse.json({ ok: true })
+  } catch(e) { return NextResponse.json({ ok: false, msg: e.message }, { status: 500 }) }
 }
