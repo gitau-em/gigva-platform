@@ -64,7 +64,7 @@ export default function SocialProof() {
         {/* Counter stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
           <CounterCard
-            target={120}
+            target={1500}
             suffix="+"
             label="Businesses on Gigva Software"
             icon="🏢"
