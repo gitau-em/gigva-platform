@@ -7,7 +7,7 @@ import {
   MessageSquareReply, CheckCircle2, XCircle, PhoneCall,
   Loader2, ChevronDown, ChevronUp, Search, Users,
   ShieldCheck, ExternalLink, PlusCircle, UserX, Key,
-  AlertCircle, Building2, UserCog, MailOpen, X, PenSquare
+  AlertCircle, Building2, UserCog, MailOpen, X, PenSquare, Download
 } from 'lucide-react'
 import { ROLES } from '@/lib/roleConfig'
 
@@ -897,6 +897,8 @@ function SentTab({ token, user }) {
   const [search, setSearch]   = useState('')
   const [checkedSent, setCheckedSent] = useState(new Set())
   const [composing,   setComposing]   = useState(false)
+  const [sentAttachments, setSentAttachments] = useState([])
+  const [loadingAttachments, setLoadingAttachments] = useState(false)
 
   const h = { Authorization: `Bearer ${token}` }
 
@@ -907,6 +909,16 @@ function SentTab({ token, user }) {
       .then(d => { setEmails(d.emails || []); setLoading(false) })
       .catch(() => setLoading(false))
   }, [token])
+
+  function fetchAttachments(emailId) {
+    if (!emailId) return
+    setLoadingAttachments(true)
+    setSentAttachments([])
+    fetch(`/api/admin/inbox/attachments?messageId=${emailId}`, { headers: h })
+      .then(r => r.json())
+      .then(d => { setSentAttachments(d.attachments || []); setLoadingAttachments(false) })
+      .catch(() => setLoadingAttachments(false))
+  }
 
   const filtered = emails.filter(e => {
     if (!search) return true
@@ -979,7 +991,7 @@ function SentTab({ token, user }) {
                   checked={checkedSent.has(e.id)}
                   onChange={ev => { ev.stopPropagation(); setCheckedSent(prev => { const n = new Set(prev); n.has(e.id) ? n.delete(e.id) : n.add(e.id); return n }) }} />
               </div>
-              <button className={`flex-1 text-left px-3 py-2.5 ${selected?.id === e.id ? 'bg-indigo-50' : ''}`} onClick={() => setSelected(e)}>
+              <button className={`flex-1 text-left px-3 py-2.5 ${selected?.id === e.id ? 'bg-indigo-50' : ''}`} onClick={() => { setSelected(e); fetchAttachments(e.id); setSentAttachments([]); }}>
                 <div className="flex items-start justify-between gap-1">
                   <span className="font-medium text-slate-700 text-xs truncate">{e.to_email}</span>
                   <span className="text-[10px] text-slate-400 flex-shrink-0">{e.sent_at ? new Date(e.sent_at).toLocaleDateString('en-KE', { month: 'short', day: '2-digit' }) : ''}</span>
@@ -1011,6 +1023,36 @@ function SentTab({ token, user }) {
             <div className="bg-white rounded-xl border border-slate-200 p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
               {selected.body_text || selected.body_html?.replace(/<[^>]+>/g, '') || '(no content)'}
             </div>
+            {/* Attachments */}
+            {loadingAttachments && (
+              <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
+                <Loader2 size={12} className="animate-spin" /> Loading attachments...
+              </div>
+            )}
+            {sentAttachments.length > 0 && (
+              <div className="mt-3 border-t border-slate-100 pt-3">
+                <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1.5">
+                  <Paperclip size={12} /> {sentAttachments.length} Attachment{sentAttachments.length !== 1 ? 's' : ''}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {sentAttachments.map(att => (
+                    <a
+                      key={att.id}
+                      href={`/api/admin/inbox/attachments/${att.id}`}
+                      download={att.filename}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-lg hover:bg-sky-100 transition-colors"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Download size={11} />
+                      <span className="truncate max-w-[160px]">{att.filename}</span>
+                      <span className="text-sky-400 ml-1">({att.size < 1048576 ? Math.round(att.size / 1024) + ' KB' : (att.size / 1048576).toFixed(1) + ' MB'})</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
