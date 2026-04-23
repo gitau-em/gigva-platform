@@ -34,7 +34,7 @@ export default function ContactPage() {
                 <h3 className="font-bold text-slate-900 mb-4 text-sm">Contact details</h3>
                 <div className="space-y-3">
                   {[
-                    { icon: Mail,   label: 'Email',    value: 'hello@gigvakenya.co.ke', href: 'mailto:hello@gigvakenya.co.ke' },
+                    { icon: Mail,   label: 'Email',    value: 'hello@gigva.co.ke', href: 'mailto:hello@gigva.co.ke' },
                     { icon: MapPin, label: 'Location', value: 'Westlands, Nairobi, Kenya' },
                     { icon: Clock,  label: 'Hours',    value: 'Mon – Fri, 8 am – 6 pm EAT' },
                   ].map(({ icon: Icon, label, value, href }) => (
