@@ -80,7 +80,7 @@ function PayslipDocument({ slip, emp }) {
           <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '6px 24px', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', marginBottom: '8px' }}>Payslip</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <img src="/logo.png" alt="Gigva" style={{ height: '52px' }} />
+          <img src="https://gigva.co.ke/logo.png" alt="Gigva" style={{ height: '52px' }} />
           <div style={{ fontSize: '11px', color: '#1a56db', fontWeight: 'bold', marginTop: '2px' }}>GIGVA KENYA</div>
         </div>
       </div>
@@ -136,7 +136,7 @@ function PayslipDocument({ slip, emp }) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '16px' }}>
         <div>
           <p style={{ fontSize: '12px', marginBottom: '6px' }}><b>Prepared By: FATUMA KAMAU</b></p>
-          <img src="/gigva-stamp.png" alt="Gigva Official Stamp" style={{ height: '90px', opacity: 0.85 }} />
+          <img src="https://gigva.co.ke/gigva-stamp.png" alt="Gigva Official Stamp" style={{ height: '90px', opacity: 0.85 }} />
         </div>
         <div style={{ textAlign: 'right' }}>
           <p style={{ fontSize: '12px' }}>Authorized Signature: ___________________________</p>
