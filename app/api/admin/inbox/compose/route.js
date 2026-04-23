@@ -3,26 +3,35 @@
  * POST /api/admin/inbox/compose
  * Compose and send a new email via Resend with attachment support (max 25MB total).
  * Stores a record in sent_emails on success.
+ * Stores attachment blobs in message_attachments for later download.
  */
-import { NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
-import { db } from '@/lib/db'
-import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-const MAX_BYTES = 25 * 1024 * 1024  // 25 MB
+import { NextResponse } from 'next/server'
+import { Resend }       from 'resend'
+import { db }           from '@/lib/db'
+import { verifyToken }  from '@/lib/auth'
+
+const resend  = new Resend(process.env.RESEND_API_KEY)
+const MAX_BYTES = 25 * 1024 * 1024
+
+function getUser(req) {
+  const auth  = req.headers.get('authorization') || ''
+  const token = auth.replace(/^Bearer\s+/i, '').trim()
+  if (!token) return null
+  try { return verifyToken(token) || null } catch { return null }
+}
 
 export async function POST(req) {
-  const auth  = req.headers.get('authorization') || ''
-  const token = auth.replace('Bearer ', '').trim()
-  const user  = verifyToken(token)
-  if (!user) return NextResponse.json({ ok: false, msg: 'Unauthorized' }, { status: 401 })
+  const user = getUser(req)
+  if (!user) return NextResponse.json({ ok: false, msg: 'Unauthorised.' }, { status: 401 })
 
-  let to, cc, bcc, subject, bodyText, attachments = []
+  let to = '', cc = '', bcc = '', subject = '', bodyText = ''
+  let attachments = []
+  let rawFiles = []
   let totalSize = 0
-  const contentType = req.headers.get('content-type') || ''
 
-  if (contentType.includes('multipart/form-data')) {
+  const ct = req.headers.get('content-type') || ''
+  if (ct.includes('multipart/form-data')) {
     const formData = await req.formData()
     to       = formData.get('to')       || ''
     cc       = formData.get('cc')       || ''
@@ -37,7 +46,9 @@ export async function POST(req) {
           return NextResponse.json({ ok: false, msg: 'Total attachments exceed 25 MB limit' }, { status: 400 })
         }
         const buffer = await file.arrayBuffer()
-        attachments.push({ filename: file.name, content: Buffer.from(buffer) })
+        const buf = Buffer.from(buffer)
+        attachments.push({ filename: file.name, content: buf })
+        rawFiles.push({ filename: file.name, mime_type: file.type || 'application/octet-stream', size: file.size, data: buf })
       }
     }
   } else {
@@ -87,13 +98,27 @@ export async function POST(req) {
     const result = await resend.emails.send(payload)
     const resendId = result?.data?.id || result?.id || ''
 
+    // Store sent email record
+    let emailId = ''
     try {
       const database = db()
-      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+      emailId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
       database.prepare(
         `INSERT INTO sent_emails (id, from_email, to_email, subject, body_text, body_html, resend_id, sent_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`
-      ).run(id, fromEmail, toList.join(', '), subject, bodyText, fullHtml, resendId)
+      ).run(emailId, fromEmail, toList.join(', '), subject, bodyText, fullHtml, resendId)
+
+      // Store attachments in message_attachments table for download
+      if (rawFiles.length > 0) {
+        const insertAttach = database.prepare(
+          `INSERT INTO message_attachments (id, message_id, message_type, filename, mime_type, size, data)
+           VALUES (?, ?, 'sent', ?, ?, ?, ?)`
+        )
+        for (const f of rawFiles) {
+          const attId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
+          insertAttach.run(attId, emailId, f.filename, f.mime_type, f.size, f.data)
+        }
+      }
     } catch {}
 
     return NextResponse.json({ ok: true, resendId })
