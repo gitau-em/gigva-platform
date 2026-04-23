@@ -1,3 +1,50 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+
+function CounterCard({ target, suffix, label, icon, duration = 2000 }) {
+  const [count, setCount] = useState(0)
+  const [started, setStarted] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !started) {
+          setStarted(true)
+        }
+      },
+      { threshold: 0.3 }
+    )
+    if (ref.current) observer.observe(ref.current)
+    return () => observer.disconnect()
+  }, [started])
+
+  useEffect(() => {
+    if (!started) return
+    let startTime = null
+    const step = (timestamp) => {
+      if (!startTime) startTime = timestamp
+      const progress = Math.min((timestamp - startTime) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCount(Math.floor(eased * target))
+      if (progress < 1) requestAnimationFrame(step)
+      else setCount(target)
+    }
+    requestAnimationFrame(step)
+  }, [started, target, duration])
+
+  return (
+    <div ref={ref} className="flex flex-col items-center justify-center bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
+      <div className="text-3xl mb-2">{icon}</div>
+      <div className="text-4xl font-extrabold text-sky-600 leading-none tabular-nums">
+        {count.toLocaleString()}{suffix}
+      </div>
+      <div className="text-sm text-slate-500 mt-2 font-medium leading-snug">{label}</div>
+    </div>
+  )
+}
+
 export default function SocialProof() {
   return (
     <section className="section bg-white border-t border-slate-200">
@@ -8,69 +55,40 @@ export default function SocialProof() {
             Built in Nairobi. Tested by real businesses.
           </h2>
           <p className="text-slate-600 leading-relaxed">
-            Gigva has operated in Kenya's M-Pesa payment space since 2012. We work directly
+            Gigva has operated in Kenya&apos;s M-Pesa payment space since 2012. We work directly
             with retail shops, logistics operators, and service businesses — and every
             feature in the product has been shaped by how those businesses actually work.
           </p>
         </div>
 
-        {/* Honest positioning metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {[
-            { val: '2012',    lbl: 'Founded in Nairobi' },
-            { val: '30 days', lbl: 'Free to start' },
-            { val: 'Daraja v2', lbl: 'M-Pesa integration' },
-            { val: 'Kenya',   lbl: 'Where data is hosted' },
-          ].map(({ val, lbl }) => (
-            <div key={lbl} className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
-              <div className="font-bold text-xl text-slate-900 leading-none">{val}</div>
-              <div className="text-xs text-slate-500 mt-1.5">{lbl}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Customer quotes */}
-        <div className="grid md:grid-cols-3 gap-5">
-          {[
-            {
-              quote: "I used to spend every Friday afternoon matching M-Pesa payments to invoices in Excel. Gigva replaced that with a 5-minute review of anything flagged.",
-              role: 'Owner, wholesale distribution',
-              location: 'Industrial Area, Nairobi',
-              initials: 'M.N.',
-            },
-            {
-              quote: "The alert when a payment arrives without a matching invoice has already saved us twice. We caught a duplicate payment from a client before it caused confusion.",
-              role: 'Finance manager, logistics firm',
-              location: 'Westlands, Nairobi',
-              initials: 'A.K.',
-            },
-            {
-              quote: "Our accountant now gets a reconciliation report at month-end instead of a pile of M-Pesa screenshots. Setup was less than an hour.",
-              role: 'Founder, e-commerce retail',
-              location: 'Nairobi CBD',
-              initials: 'P.O.',
-            },
-          ].map(t => (
-            <div key={t.role} className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
-              <div className="flex gap-1 mb-4">
-                {[1,2,3,4,5].map(s => (
-                  <svg key={s} className="w-3.5 h-3.5 text-amber-400 fill-current" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                ))}
-              </div>
-              <p className="text-sm text-slate-700 leading-relaxed italic mb-4">"{t.quote}"</p>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                  {t.initials}
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-slate-700">{t.role}</div>
-                  <div className="text-[11px] text-slate-400">{t.location}</div>
-                </div>
-              </div>
-            </div>
-          ))}
+        {/* Counter stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+          <CounterCard
+            target={120}
+            suffix="+"
+            label="Businesses on Gigva Software"
+            icon="🏢"
+            duration={1800}
+          />
+          <CounterCard
+            target={23}
+            suffix=""
+            label="Kenyan Counties with Active Users"
+            icon="📍"
+            duration={2000}
+          />
+          <CounterCard
+            target={99}
+            suffix="%"
+            label="Platform Uptime SLA Guarantee"
+            icon="⚡"
+            duration={1600}
+          />
+          <div className="flex flex-col items-center justify-center bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow text-center">
+            <div className="text-3xl mb-2">🏆</div>
+            <div className="text-sm font-bold text-indigo-700 leading-snug">Top Fintech Startup</div>
+            <div className="text-xs text-slate-500 mt-1 leading-snug">Kenya Startup Awards 2024 — Best SME Finance Tool</div>
+          </div>
         </div>
       </div>
     </section>
