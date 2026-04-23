@@ -80,7 +80,7 @@ function PayslipDocument({ slip, emp }) {
           <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '6px 24px', fontWeight: 'bold', fontSize: '16px', borderRadius: '4px', marginBottom: '8px' }}>Payslip</div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <img src="https://gigva.co.ke/logo.png" alt="Gigva" style={{ height: '52px' }} />
+          <svg width="152" height="40" viewBox="0 0 152 40" xmlns="http://www.w3.org/2000/svg"><g><rect x="0" y="0" width="40" height="40" rx="9" fill="#0ea5e9"/><path d="M28.5 10.5 A10.5 10.5 0 1 0 28.5 29.5" stroke="#fff" strokeWidth="4" strokeLinecap="round" fill="none"/><line x1="28.5" y1="20" x2="20.5" y2="20" stroke="#fff" strokeWidth="4" strokeLinecap="round"/><line x1="28.5" y1="29.5" x2="28.5" y2="24" stroke="#fff" strokeWidth="4" strokeLinecap="round"/><circle cx="32" cy="7" r="2.5" fill="#7dd3fc"/></g><text x="49" y="24" fontFamily="system-ui,sans-serif" fontWeight="800" fontSize="18" fill="#0ea5e9" letterSpacing="-.5">GIGVA</text><text x="50" y="35" fontFamily="system-ui,sans-serif" fontWeight="700" fontSize="7.5" fill="#7dd3fc" letterSpacing="3.5">KENYA</text></svg>
           <div style={{ fontSize: '11px', color: '#1a56db', fontWeight: 'bold', marginTop: '2px' }}>GIGVA KENYA</div>
         </div>
       </div>
