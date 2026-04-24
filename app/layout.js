@@ -2,6 +2,7 @@ import '../styles/globals.css'
 import Navbar   from '@/components/layout/Navbar'
 import Footer   from '@/components/layout/Footer'
 import TawkChat from '@/components/chat/TawkChat'
+import Script from 'next/script'
 
 export const metadata = {
   title: {
@@ -27,16 +28,25 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_KE',
-    siteName: 'Gigva Kenya',
+    siteName: 'Gigva',
+    url: 'https://gigva.co.ke',
     title: 'Gigva | Leading SaaS Platform in Kenya for Business Automation',
     description:
-      'Gigva is a leading SaaS platform in Kenya — AI-powered tools for M-Pesa reconciliation, payroll, analytics and marketplace. Serving Nairobi and across Kenya.',
-    url: 'https://gigva.co.ke',
+      'Gigva is Kenya\'s leading SaaS platform. AI-powered analytics, M-Pesa reconciliation, payroll, and marketplace solutions for Nairobi businesses and SMEs across Kenya.',
+    images: [
+      {
+        url: 'https://gigva.co.ke/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Gigva — Kenya SaaS Platform',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Gigva | Leading SaaS Platform in Kenya',
-    description: 'AI-powered business software for Kenyan SMEs. Based in Nairobi, serving businesses across Kenya and East Africa.',
+    description:
+      'AI-powered SaaS for Kenyan businesses: M-Pesa reconciliation, payroll, analytics, marketplace. Serving businesses across Kenya and East Africa.',
   },
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'),
   alternates: { canonical: 'https://gigva.co.ke' },
@@ -96,6 +106,21 @@ export default function RootLayout({ children }) {
         <Footer />
         {/* Tawk.to live chat — loads async after page render */}
         <TawkChat />
+        {/* Google Analytics 4 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-LHE5L3HBKJ"
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-LHE5L3HBKJ', {
+              page_path: window.location.pathname,
+            });
+          `}
+        </Script>
       </body>
     </html>
   )
