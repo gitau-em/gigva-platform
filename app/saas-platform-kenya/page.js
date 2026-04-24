@@ -1,10 +1,13 @@
+'use client'
+
 import Link from 'next/link'
+import { TrackableLink } from '@/components/analytics/trackEvent'
 import { CheckCircle2, ArrowRight, MapPin, Star, Zap, Shield, BarChart3, Users } from 'lucide-react'
 
 export const metadata = {
-  title: 'Top SaaS Platforms in Kenya | Gigva — Leading Business Software in Nairobi',
+  title: 'Top SaaS Platforms in Kenya | Gigva â Leading Business Software in Nairobi',
   description:
-    'Discover why Gigva is Kenya's leading SaaS platform. AI-powered business software built in Nairobi for Kenyan SMEs — M-Pesa reconciliation, payroll, analytics, and more.',
+    'Discover why Gigva is Kenya's leading SaaS platform. AI-powered business software built in Nairobi for Kenyan SMEs â M-Pesa reconciliation, payroll, analytics, and more.',
   keywords: [
     'SaaS platform Kenya',
     'SaaS Kenya',
@@ -22,7 +25,7 @@ export const metadata = {
   alternates: { canonical: 'https://gigva.co.ke/saas-platform-kenya' },
   openGraph: {
     title: 'Top SaaS Platforms in Kenya | Gigva',
-    description: 'Gigva is Kenya's leading SaaS platform — built in Nairobi for Kenyan businesses. M-Pesa reconciliation, payroll, and AI analytics.',
+    description: 'Gigva is Kenya's leading SaaS platform â built in Nairobi for Kenyan businesses. M-Pesa reconciliation, payroll, and AI analytics.',
     url: 'https://gigva.co.ke/saas-platform-kenya',
     type: 'website',
     locale: 'en_KE',
@@ -38,7 +41,7 @@ const features = [
   {
     icon: Users,
     title: 'Kenya-Compliant Payroll',
-    desc: 'Full PAYE, NSSF Tier I & II, SHIF/NHIF, and Affordable Housing Levy calculations — always up to date with KRA regulations.',
+    desc: 'Full PAYE, NSSF Tier I & II, SHIF/NHIF, and Affordable Housing Levy calculations â always up to date with KRA regulations.',
   },
   {
     icon: BarChart3,
@@ -72,7 +75,7 @@ export default function SaasKenyaPage() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-sky-800/60 border border-sky-600 text-sky-200 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
             <MapPin size={11} />
-            Based in Nairobi, Kenya — Serving businesses across all 47 counties
+            Based in Nairobi, Kenya â Serving businesses across all 47 counties
           </div>
           <h1 className="font-bold text-4xl md:text-5xl mb-6 leading-tight">
             Top SaaS Platforms in Kenya
@@ -80,16 +83,16 @@ export default function SaasKenyaPage() {
           <p className="text-sky-100 text-lg mb-4 max-w-2xl mx-auto">
             Kenya's growing tech economy needs SaaS platforms that understand local payments,
             tax regulations, and business realities. Here's why <strong>Gigva leads as Kenya's
-            premier business software platform</strong> — built in Nairobi, for Kenyan businesses.
+            premier business software platform</strong> â built in Nairobi, for Kenyan businesses.
           </p>
           <p className="text-sky-200 text-sm mb-8 max-w-xl mx-auto">
             Over 1,500 businesses across Kenya use Gigva to automate operations, reconcile
             M-Pesa payments, and manage payroll with Kenya-compliant tax calculations.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/trial" className="bg-white text-sky-800 font-bold px-8 py-3 rounded-lg hover:bg-sky-50 transition-colors inline-flex items-center gap-2 justify-center">
+            <TrackableLink href="/trial" eventName="start_free_trial" eventParams={{ page: '/saas-platform-kenya', cta_position: 'hero' }} className="bg-white text-sky-800 font-bold px-8 py-3 rounded-lg hover:bg-sky-50 transition-colors inline-flex items-center gap-2 justify-center">
               Start Free Trial <ArrowRight size={16} />
-            </Link>
+            </TrackableLink>
             <Link href="/book-demo" className="border border-sky-400 text-white font-bold px-8 py-3 rounded-lg hover:bg-sky-800/60 transition-colors inline-flex items-center gap-2 justify-center">
               Book a Demo
             </Link>
@@ -105,7 +108,7 @@ export default function SaasKenyaPage() {
           </h2>
           <div className="prose prose-slate max-w-none">
             <p className="text-slate-600 text-base leading-relaxed mb-4">
-              Kenya is East Africa's technology hub, home to Nairobi's Silicon Savannah —
+              Kenya is East Africa's technology hub, home to Nairobi's Silicon Savannah â
               a thriving ecosystem of tech startups, software companies, and digital innovation.
               The demand for <strong>SaaS platforms in Kenya</strong> has surged as businesses
               move from manual spreadsheets to cloud-based business software.
@@ -113,7 +116,7 @@ export default function SaasKenyaPage() {
             <p className="text-slate-600 text-base leading-relaxed mb-4">
               However, most global SaaS platforms are not built for Kenya. They don't support
               M-Pesa integration, don't calculate PAYE under Kenya Revenue Authority rules,
-              and charge in USD — making them expensive and impractical for Kenyan SMEs.
+              and charge in USD â making them expensive and impractical for Kenyan SMEs.
             </p>
             <p className="text-slate-600 text-base leading-relaxed">
               <strong>Gigva was built specifically as a SaaS platform in Kenya</strong>,
@@ -131,7 +134,7 @@ export default function SaasKenyaPage() {
             Why Gigva is Kenya's Leading SaaS Platform
           </h2>
           <p className="text-slate-600 text-center mb-12 max-w-2xl mx-auto">
-            Gigva is more than just business software in Kenya — it's a complete operating
+            Gigva is more than just business software in Kenya â it's a complete operating
             system for Kenyan businesses, from Nairobi retail shops to logistics firms across
             East Africa.
           </p>
@@ -158,7 +161,7 @@ export default function SaasKenyaPage() {
             How Kenya SaaS Platforms Compare
           </h2>
           <p className="text-slate-600 text-center mb-10 max-w-xl mx-auto">
-            When evaluating business software in Kenya, the key differentiator is local fit —
+            When evaluating business software in Kenya, the key differentiator is local fit â
             M-Pesa support, Kenya tax compliance, and local hosting.
           </p>
           <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -206,7 +209,7 @@ export default function SaasKenyaPage() {
           </h2>
           <p className="text-slate-600 mb-10">
             From Nairobi's CBD to Mombasa's port, from Kisumu's lakeside economy
-            to the agricultural heartlands — Gigva's SaaS platform reaches businesses
+            to the agricultural heartlands â Gigva's SaaS platform reaches businesses
             across Kenya and East Africa.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
@@ -226,7 +229,7 @@ export default function SaasKenyaPage() {
       <section className="py-16 px-5 md:px-8 bg-white">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-slate-900 mb-6">
-            About Gigva — Kenya's SaaS Pioneer
+            About Gigva â Kenya's SaaS Pioneer
           </h2>
           <div className="grid md:grid-cols-2 gap-10 items-center">
             <div>
@@ -242,7 +245,7 @@ export default function SaasKenyaPage() {
                 Levy regulations.
               </p>
               <p className="text-slate-600 leading-relaxed">
-                Today, Gigva serves over 1,500 Kenyan businesses — from retail shops in Nairobi's
+                Today, Gigva serves over 1,500 Kenyan businesses â from retail shops in Nairobi's
                 Westlands to logistics companies operating across East Africa.
               </p>
               <div className="mt-6 space-y-2 text-sm text-slate-600">
@@ -282,15 +285,15 @@ export default function SaasKenyaPage() {
             M-Pesa, and run Kenya-compliant payroll. Serving Nairobi and across Kenya.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/trial" className="bg-white text-sky-800 font-bold px-8 py-3 rounded-lg hover:bg-sky-50 transition-colors inline-flex items-center gap-2 justify-center">
+            <TrackableLink href="/trial" eventName="start_free_trial" eventParams={{ page: '/saas-platform-kenya', cta_position: 'bottom' }} className="bg-white text-sky-800 font-bold px-8 py-3 rounded-lg hover:bg-sky-50 transition-colors inline-flex items-center gap-2 justify-center">
               Start Free 30-Day Trial <ArrowRight size={16} />
-            </Link>
+            </TrackableLink>
             <Link href="/" className="border border-sky-400 text-white font-bold px-8 py-3 rounded-lg hover:bg-sky-600 transition-colors inline-flex items-center gap-2 justify-center">
               Back to Homepage
             </Link>
           </div>
           <p className="mt-6 text-sky-300 text-xs">
-            Based in Nairobi, Kenya — hello@gigva.co.ke — +254 701 443 444
+            Based in Nairobi, Kenya â hello@gigva.co.ke â +254 701 443 444
           </p>
         </div>
       </section>
