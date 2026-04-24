@@ -7,6 +7,7 @@ const COLS = [
       { href: '/product',   label: 'Product overview' },
       { href: '/features',  label: 'Features'         },
       { href: '/pricing',   label: 'Pricing'          },
+      { href: '/saas-platform-kenya', label: 'SaaS Platform Kenya' },
     ],
   },
   {
@@ -57,13 +58,21 @@ export default function Footer() {
               </svg>
             </Link>
             <p className="text-sm leading-relaxed text-slate-500 max-w-[240px] mb-4">
-              M-Pesa reconciliation software for Kenyan retail shops, logistics firms, and SMEs.
+              Kenya&apos;s leading SaaS platform for business automation. M-Pesa reconciliation, payroll,
+              and AI-powered analytics for Nairobi businesses and SMEs across Kenya.
             </p>
             <div className="space-y-1 text-xs text-slate-600">
-              <div>Westlands Business Park, Nairobi</div>
+              <div className="font-semibold text-slate-400">&#x1F1F0;&#x1F1EA; Based in Nairobi, Kenya</div>
+              <div>Westlands Business Park, Nairobi 00100</div>
+              <a
+                href="tel:+254701443444"
+                className="block text-slate-500 hover:text-sky-400 transition-colors"
+              >
+                +254 701 443 444
+              </a>
               <a
                 href="mailto:hello@gigva.co.ke"
-                className="text-slate-500 hover:text-sky-400 transition-colors"
+                className="block text-slate-500 hover:text-sky-400 transition-colors"
               >
                 hello@gigva.co.ke
               </a>
@@ -109,11 +118,11 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
           <span className="text-xs text-slate-600">
-            © {year} Gigva Kenya Limited. All rights reserved.
+            &copy; {year} Gigva Kenya Limited. All rights reserved. &mdash; SaaS Platform in Kenya
           </span>
           <div className="flex items-center gap-4 text-xs text-slate-700">
             <span>Kenya Data Protection Act 2019 compliant</span>
-            <span>Data hosted in Nairobi 🇰🇪</span>
+            <span>Data hosted in Nairobi &#x1F1F0;&#x1F1EA;</span>
           </div>
         </div>
       </div>
