@@ -1066,6 +1066,8 @@ function InboxTab({ token, user }) {
     const [selected, setSelected]   = useState(null)
     const [loading,  setLoading]    = useState(true)
     const [attachments, setAttachments] = useState([])
+    const [inboxAttachments, setInboxAttachments]   = useState([])
+    const [loadingInboxAtts, setLoadingInboxAtts]   = useState(false)
     const [search,   setSearch]     = useState('')
     const [replying,     setReplying]     = useState(false)
     const [replyText,    setReplyText]    = useState('')
@@ -1147,6 +1149,12 @@ function InboxTab({ token, user }) {
     function openMsg(msg) {
           setSelected(msg)
           markRead(msg)
+          setInboxAttachments([])
+          setLoadingInboxAtts(true)
+          fetch(`/api/admin/inbox/attachments?messageId=${msg.id}`, { headers: h })
+            .then(r => r.json())
+            .then(d => { setInboxAttachments(d.attachments || []); setLoadingInboxAtts(false) })
+            .catch(() => setLoadingInboxAtts(false))
     }
 
     const filtered = messages.filter(m => {
@@ -1364,6 +1372,36 @@ function InboxTab({ token, user }) {
                       <div className="mt-4 border-t border-slate-100 pt-3">
                         <p className="text-xs font-semibold text-indigo-600 mb-1">Your reply:</p>
                         <pre className="whitespace-pre-wrap text-sm text-slate-600 font-sans bg-indigo-50 rounded-lg p-3">{selected.reply_text}</pre>
+                      </div>
+                    )}
+                    {/* Attachments from sent emails (payslips, files) */}
+                    {loadingInboxAtts && (
+                      <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
+                        <Loader2 size={12} className="animate-spin" /> Loading attachments...
+                      </div>
+                    )}
+                    {inboxAttachments.length > 0 && (
+                      <div className="mt-3 border-t border-slate-100 pt-3">
+                        <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1.5">
+                          <Paperclip size={12} /> {inboxAttachments.length} Attachment{inboxAttachments.length !== 1 ? 's' : ''}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {inboxAttachments.map(att => (
+                            <a
+                              key={att.id}
+                              href={`/api/admin/inbox/attachments/${att.id}`}
+                              download={att.filename}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-sky-50 text-sky-700 border border-sky-200 rounded-lg hover:bg-sky-100 transition-colors"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Download size={11} />
+                              <span className="truncate max-w-[160px]">{att.filename}</span>
+                              <span className="text-sky-400 ml-1">({att.size < 1048576 ? Math.round(att.size / 1024) + ' KB' : (att.size / 1048576).toFixed(1) + ' MB'})</span>
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
