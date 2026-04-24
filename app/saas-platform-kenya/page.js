@@ -5,7 +5,7 @@ import { CheckCircle2, ArrowRight, MapPin, Star, Zap, Shield, BarChart3, Users }
 export const metadata = {
   title: 'Top SaaS Platforms in Kenya | Gigva â Leading Business Software in Nairobi',
   description:
-    'Discover why Gigva is Kenya's leading SaaS platform. AI-powered business software built in Nairobi for Kenyan SMEs â M-Pesa reconciliation, payroll, analytics, and more.',
+    "Discover why Gigva is Kenya's leading SaaS platform. AI-powered business software built in Nairobi for Kenyan SMEs â M-Pesa reconciliation, payroll, analytics, and more.",
   keywords: [
     'SaaS platform Kenya',
     'SaaS Kenya',
@@ -23,7 +23,7 @@ export const metadata = {
   alternates: { canonical: 'https://gigva.co.ke/saas-platform-kenya' },
   openGraph: {
     title: 'Top SaaS Platforms in Kenya | Gigva',
-    description: 'Gigva is Kenya's leading SaaS platform â built in Nairobi for Kenyan businesses. M-Pesa reconciliation, payroll, and AI analytics.',
+    description: "Gigva is Kenya's leading SaaS platform â built in Nairobi for Kenyan businesses. M-Pesa reconciliation, payroll, and AI analytics.",
     url: 'https://gigva.co.ke/saas-platform-kenya',
     type: 'website',
     locale: 'en_KE',
@@ -34,7 +34,7 @@ const features = [
   {
     icon: Zap,
     title: 'M-Pesa Reconciliation',
-    desc: 'Automatically match every M-Pesa transaction to your invoices in real time. Built specifically for Kenya's Daraja API.',
+    desc: "Automatically match every M-Pesa transaction to your invoices in real time. Built specifically for Kenya's Daraja API.",
   },
   {
     icon: Users,
@@ -49,7 +49,7 @@ const features = [
   {
     icon: Shield,
     title: 'Kenya Data Protection Compliant',
-    desc: 'All data hosted in Nairobi. Fully compliant with Kenya's Data Protection Act 2019 and East Africa data sovereignty laws.',
+    desc: "All data hosted in Nairobi. Fully compliant with Kenya's Data Protection Act 2019 and East Africa data sovereignty laws.",
   },
 ]
 
