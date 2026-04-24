@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowRight, CheckCircle2, TrendingUp } from 'lucide-react'
+import { ArrowRight, CheckCircle2, TrendingUp, MapPin } from 'lucide-react'
 
 export default function Hero() {
   return (
@@ -19,35 +19,43 @@ export default function Hero() {
 
           {/* Left — copy */}
           <div>
-            {/* Stage pill */}
-            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
-              Free for your first 30 days — no credit card
+            {/* Location trust badge */}
+            <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-3">
+              <MapPin size={11} className="flex-shrink-0" />
+              Kenya&rsquo;s Leading SaaS Platform &mdash; Based in Nairobi
             </div>
 
+            {/* Stage pill */}
+            <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-5 ml-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+              Free for your first 30 days &mdash; no credit card
+            </div>
+
+            {/* H1 — primary keyword target */}
             <h1 className="font-display font-bold text-4xl md:text-5xl text-slate-900 leading-[1.08] mb-5">
-              Reconcile every<br />
-              M-Pesa payment<br />
-              <span className="text-sky-500">in seconds, not hours</span>
+              Kenya&rsquo;s #1 SaaS platform<br />
+              for business<br />
+              <span className="text-sky-500">automation &amp; payments</span>
             </h1>
 
+            {/* First paragraph — keyword rich, readable */}
             <p className="text-slate-600 leading-relaxed mb-6 text-base">
-              Gigva is a business operating system for Kenyan retail shops, logistics firms, 
-              and SMEs. It pulls your M-Pesa transactions in real time, matches them to invoices 
-              automatically, and flags anything that needs your attention — so month-end close 
-              takes minutes, not days.
+              Gigva is a SaaS platform in Kenya built for Nairobi businesses and SMEs across Kenya.
+              It automatically reconciles M-Pesa transactions, manages payroll with Kenya-compliant
+              tax calculations, and delivers real-time analytics &mdash; so your business runs smarter,
+              not harder.
             </p>
 
             {/* Quantifiable value statement */}
             <div className="bg-sky-50 border border-sky-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3">
               <TrendingUp size={18} className="text-sky-500 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-slate-700">
-                <strong className="text-slate-900">Businesses using Gigva reconcile 300+ daily M-Pesa transactions 
-                in under 60 seconds</strong> — replacing 3–4 hours of manual spreadsheet work every week.
+                <strong className="text-slate-900">Over 1,500 businesses across Kenya&rsquo;s 23 counties</strong>{' '}
+                use Gigva to automate payments, reconcile M-Pesa, and manage their teams &mdash; saving 3&ndash;4 hours of manual work every week.
               </p>
             </div>
 
-            {/* CTAs — both visible above fold */}
+            {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <Link href="/book-demo" className="btn-primary py-3 px-6 text-sm font-bold justify-center">
                 Book a free demo <ArrowRight size={15} />
@@ -71,6 +79,11 @@ export default function Hero() {
                 </div>
               ))}
             </div>
+
+            {/* H2 — secondary keyword targeting */}
+            <h2 className="mt-6 text-sm font-semibold text-slate-500 uppercase tracking-widest">
+              Kenya&rsquo;s Most Trusted Business Software &mdash; Serving Nairobi &amp; East Africa
+            </h2>
           </div>
 
           {/* Right — mini dashboard preview */}
@@ -79,7 +92,7 @@ export default function Hero() {
               {/* Window chrome */}
               <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-800 bg-slate-950/70">
                 <div className="flex gap-1"><div className="w-2 h-2 rounded-full bg-red-500/60"/><div className="w-2 h-2 rounded-full bg-amber-500/60"/><div className="w-2 h-2 rounded-full bg-emerald-500/60"/></div>
-                <span className="text-[10px] text-slate-600 font-mono ml-1">Gigva Dashboard</span>
+                <span className="text-[10px] text-slate-600 font-mono ml-1">Gigva Dashboard &mdash; Nairobi</span>
                 <span className="ml-auto text-[10px] text-emerald-400 flex items-center gap-1"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"/>Live</span>
               </div>
               {/* Metrics */}
@@ -108,7 +121,7 @@ export default function Hero() {
                   <div key={i} className="flex items-center justify-between px-4 py-2.5 hover:bg-slate-800/40">
                     <div>
                       <div className="text-xs text-slate-200 font-medium">{tx.from}</div>
-                      <div className="text-[10px] text-slate-500">M-Pesa · C2B</div>
+                      <div className="text-[10px] text-slate-500">M-Pesa &middot; C2B</div>
                     </div>
                     <div className="text-right">
                       <div className="text-xs font-display font-bold text-white">KSh {tx.amount}</div>
@@ -118,7 +131,7 @@ export default function Hero() {
                 ))}
               </div>
               <div className="px-4 py-2 bg-slate-950/40 border-t border-slate-800">
-                <span className="text-[10px] text-slate-600">Last sync: <span className="text-emerald-500">2s ago</span> · Daraja API</span>
+                <span className="text-[10px] text-slate-600">Last sync: <span className="text-emerald-500">2s ago</span> &middot; Daraja API &middot; Kenya</span>
               </div>
             </div>
           </div>
