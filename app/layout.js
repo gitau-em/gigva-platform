@@ -51,6 +51,9 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'),
   alternates: { canonical: 'https://gigva.co.ke' },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  verification: {
+    google: 'Bh5VO_YqheUXH9N-htKFE7Y1EiumRbp5Bjo9ivUMq3o',
+  },
 }
 
 const jsonLd = {
