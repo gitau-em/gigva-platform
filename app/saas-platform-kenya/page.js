@@ -1,5 +1,3 @@
-'use client'
-
 import Link from 'next/link'
 import { TrackableLink } from '@/components/analytics/trackEvent'
 import { CheckCircle2, ArrowRight, MapPin, Star, Zap, Shield, BarChart3, Users } from 'lucide-react'
