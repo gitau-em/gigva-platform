@@ -14,6 +14,7 @@ export default function sitemap() {
     { url: '/login',     priority: 0.5, changeFrequency: 'yearly'  },
     { url: '/privacy',   priority: 0.3, changeFrequency: 'yearly'  },
     { url: '/terms',     priority: 0.3, changeFrequency: 'yearly'  },
+    { url: '/saas-platform-kenya', priority: 0.9, changeFrequency: 'monthly' },
   ]
 
   return routes.map(r => ({
