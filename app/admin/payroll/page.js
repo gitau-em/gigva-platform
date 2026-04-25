@@ -13,14 +13,16 @@ function fmtKsh(n) {
   return Number(n||0).toLocaleString('en-KE',{minimumFractionDigits:2,maximumFractionDigits:2})
 }
 
+// KRA Tax Bands: returns GROSS TAX (before personal relief)
 function calcPAYE(taxable) {
   let tax = 0
-  if (taxable <= 24000) tax = taxable * 0.10
-  else if (taxable <= 32333) tax = 2400 + (taxable - 24000) * 0.25
-  else if (taxable <= 500000) tax = 2400 + 2083.25 + (taxable - 32333) * 0.30
-  else if (taxable <= 800000) tax = 2400 + 2083.25 + 140300.1 + (taxable - 500000) * 0.325
-  else tax = 2400 + 2083.25 + 140300.1 + 97500 + (taxable - 800000) * 0.35
-  return Math.max(0, tax)
+  if (taxable <= 0) return 0
+  tax += Math.min(taxable, 24000) * 0.10
+  if (taxable > 24000) tax += Math.min(taxable - 24000, 32333 - 24000) * 0.25
+  if (taxable > 32333) tax += Math.min(taxable - 32333, 500000 - 32333) * 0.30
+  if (taxable > 500000) tax += Math.min(taxable - 500000, 800000 - 500000) * 0.325
+  if (taxable > 800000) tax += (taxable - 800000) * 0.35
+  return Math.round(Math.max(0, tax) * 100) / 100
 }
 
 // NHIF rates: applicable for payslips up to November 2024
@@ -34,7 +36,7 @@ function calcNHIF(gross) {
 }
 
 // SHIF rates: 2.75% of gross, minimum KES 300 (from December 2024)
-function calcSHIF(gross) { return Math.max(300, gross * 0.0275) }
+function calcSHIF(gross) { return Math.round(gross * 0.0275 * 100) / 100 }
 
 // NSSF 2013 Act - Tier I + Tier II
 function calcNSSF(gross) {
@@ -63,16 +65,16 @@ function calcPayroll(basic, house, car, other, pension=0, mi=0, month=new Date()
   const healthDeduction = shifApplies ? calcSHIF(grossPay) : calcNHIF(grossPay)
   const shif = shifApplies ? healthDeduction : 0
   const nhif = shifApplies ? 0 : healthDeduction
-  const grossTaxable = grossPay + house
-  const netTaxable = Math.max(0, grossTaxable - nssf - pension - mi)
-  const payeGross = calcPAYE(netTaxable)
+  // Taxable Income = Gross Pay - NSSF only (SHIF/AHL do NOT reduce taxable income per KRA rules)
+  const taxableIncome = Math.max(0, Math.round((grossPay - nssf) * 100) / 100)
+  const payeGross = calcPAYE(taxableIncome)
   const personalRelief = 2400
-  const netTax = Math.max(0, payeGross - personalRelief)
-  const totalDeductions = nssf + netTax + healthDeduction + housingLevy + pension + mi
-  const netPay = grossPay - totalDeductions
+  const netTax = Math.max(0, Math.round((payeGross - personalRelief) * 100) / 100)
+  const totalDeductions = Math.round((nssf + netTax + healthDeduction + housingLevy + pension + mi) * 100) / 100
+  const netPay = Math.round((grossPay - totalDeductions) * 100) / 100
   return { grossPay, nssf, nssf_tier1: nssfResult.tierI, nssf_tier2: nssfResult.tierII,
     shif, nhif, housing_levy: housingLevy,
-    grossTaxable, netTaxable, paye: payeGross, personalRelief, netTax,
+    grossTaxable: taxableIncome, netTaxable: taxableIncome, paye: payeGross, personalRelief, netTax,
     total_deductions: totalDeductions, netPay }
 }
 
@@ -134,18 +136,27 @@ function PayslipDocument({ slip, emp }) {
           <tr><td style={td}><b>MARITAL STATUS:</b> {emp.marital_status||'Single'}</td><td style={td}></td><td style={td}><b>BANK NAME:</b> {emp.bank_name||'&#x2014;'} | <b>CODE:</b> {emp.bank_code||'&#x2014;'}</td></tr>
         </tbody>
       </table>
-      {(slip.leave_balance_days > 0 || slip.leave_from) && (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '12px' }}>
-          <thead><tr><th colSpan={3} style={{ ...hd, textAlign: 'left' }}>Leave Details</th></tr></thead>
-          <tbody>
-            <tr>
-              <td style={td}><b>Leave Balance:</b> {slip.leave_balance_days||0} days</td>
-              <td style={td}><b>Leave Taken:</b> {slip.leave_from||'&#x2014;'} to {slip.leave_to||'&#x2014;'}</td>
-              <td style={td}><b>Days Taken:</b> {slip.leave_days_taken||0}</td>
-            </tr>
-          </tbody>
-        </table>
-      )}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '12px' }}>
+        <thead><tr><th colSpan={6} style={{ ...hd, textAlign: 'left' }}>Leave Summary</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style={td}><b>Annual Leave Entitlement:</b></td>
+            <td style={td}>{slip.annual_leave_entitlement ?? 25} days</td>
+            <td style={td}><b>Annual Leave Taken:</b></td>
+            <td style={td}>{slip.annual_leave_taken || 0} days</td>
+            <td style={td}><b>Annual Leave Balance:</b></td>
+            <td style={{ ...td, fontWeight: 'bold', color: '#1a56db' }}>{slip.annual_leave_balance ?? ((slip.annual_leave_entitlement ?? 25) - (slip.annual_leave_taken || 0))} days</td>
+          </tr>
+          <tr style={{ backgroundColor: '#f9fbff' }}>
+            <td style={td}><b>Sick Leave Entitlement:</b></td>
+            <td style={td}>{slip.sick_leave_entitlement ?? 10} days</td>
+            <td style={td}><b>Sick Leave Taken:</b></td>
+            <td style={td}>{slip.sick_leave_taken || 0} days</td>
+            <td style={td}><b>Sick Leave Balance:</b></td>
+            <td style={{ ...td, fontWeight: 'bold', color: '#1a56db' }}>{slip.sick_leave_balance ?? ((slip.sick_leave_entitlement ?? 10) - (slip.sick_leave_taken || 0))} days</td>
+          </tr>
+        </tbody>
+      </table>
       {/* Earnings / Deductions split layout */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
         <div style={{ flex: 1 }}>
@@ -246,7 +257,7 @@ export default function PayrollPage() {
     period_month: new Date().getMonth()+1, period_year: new Date().getFullYear(),
     basic_pay:'', house_allowance:'', car_benefit:'', other_allowances:'',
     pension_provident:'0', hosp_mortgage_interest:'0',
-    leave_balance_days:'', leave_from:'', leave_to:'', leave_days_taken:'0', notes:''
+    annual_leave_taken:'0', sick_leave_taken:'0', leave_from:'', leave_to:'', notes:''
   })
   const [empForm, setEmpForm] = useState({
     name:'', employee_id:'', department:'', designation:'', email:'', phone:'',
@@ -335,9 +346,9 @@ export default function PayrollPage() {
         basic_pay:b, house_allowance:h, car_benefit:c, other_allowances:o,
         pension_provident:parseFloat(slipForm.pension_provident)||0,
         hosp_mortgage_interest:parseFloat(slipForm.hosp_mortgage_interest)||0,
-        leave_balance_days:parseInt(slipForm.leave_balance_days)||0,
+        annual_leave_taken:parseInt(slipForm.annual_leave_taken)||0,
+        sick_leave_taken:parseInt(slipForm.sick_leave_taken)||0,
         leave_from:slipForm.leave_from||null, leave_to:slipForm.leave_to||null,
-        leave_days_taken:parseInt(slipForm.leave_days_taken)||0,
         notes:slipForm.notes, slip_number: payslips.length+1, ...calc
       }
       const r = await fetch('/api/admin/payroll/payslips', { method:'POST', headers:hdr, body:JSON.stringify(body) })
@@ -564,9 +575,9 @@ export default function PayrollPage() {
               </div>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-              <p className="text-xs font-bold text-slate-500 uppercase mb-4">Leave Details</p>
+              <p className="text-xs font-bold text-slate-500 uppercase mb-4">Leave Details <span className="text-slate-400 font-normal normal-case">(Entitlement: 25 Annual / 10 Sick days per year)</span></p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[['Leave Balance (days)','leave_balance_days','number'],['Leave From','leave_from','date'],['Leave To','leave_to','date'],['Days Taken','leave_days_taken','number']].map(([l,f,t]) => (
+                {[['Annual Leave Taken (days)','annual_leave_taken','number'],['Sick Leave Taken (days)','sick_leave_taken','number'],['Leave From','leave_from','date'],['Leave To','leave_to','date']].map(([l,f,t]) => (
                   <div key={f}>
                     <label className="block text-xs font-semibold text-slate-600 mb-1">{l}</label>
                     <input type={t} value={slipForm[f]} onChange={e=>setSlipForm(f2=>({...f2,[f]:e.target.value}))} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
