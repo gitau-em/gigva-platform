@@ -91,109 +91,115 @@ async function buildPayslipPdf(slip, emp) {
   const helvetica     = await pdfDoc.embedFont(StandardFonts.Helvetica)
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-  // A4 page: 595.28 x 841.89 pt. pdf-lib origin is bottom-left.
+  // A4: 595.28 x 841.89 pt. pdf-lib origin = bottom-left.
   const pageW_pt = 595.28
   const pageH_pt = 841.89
   const page = pdfDoc.addPage([pageW_pt, pageH_pt])
 
-  const margin = 40
+  const margin   = 36
   const contentW = pageW_pt - margin * 2
 
-  // pdf-lib: y = pageH - topOffset (bottom-left origin)
+  // Helper: topY converts top-down offset to pdf-lib bottom-up y
   function topY(topOffset) { return pageH_pt - topOffset }
 
   // ── HEADER: address left | Payslip center | Logo right ──
-  const headerTop = 36
+  const headerTop = 32
   const addrLines = [
-    { text: 'Westlands Business Park, Nairobi', bold: true,  size: 9 },
-    { text: 'P.O Box 00100, Kenya',             bold: false, size: 8 },
-    { text: '+254 701 443 444',                  bold: false, size: 8 },
-    { text: 'hello@gigva.co.ke',                 bold: false, size: 8 },
-    { text: 'www.gigva.co.ke',                   bold: false, size: 8 },
+    { text: 'Westlands Business Park, Nairobi', bold: true,  size: 8.5 },
+    { text: 'P.O Box 00100, Kenya',             bold: false, size: 7.5 },
+    { text: '+254 701 443 444',                  bold: false, size: 7.5 },
+    { text: 'hello@gigva.co.ke',                 bold: false, size: 7.5 },
+    { text: 'www.gigva.co.ke',                   bold: false, size: 7.5 },
   ]
   addrLines.forEach((l, i) => {
-    page.drawText(l.text, { x: margin, y: topY(headerTop + i * 11), font: l.bold ? helveticaBold : helvetica, size: l.size, color: rgb(0.22, 0.27, 0.36) })
+    page.drawText(l.text, { x: margin, y: topY(headerTop + i * 10), font: l.bold ? helveticaBold : helvetica, size: l.size, color: rgb(0.22, 0.27, 0.36) })
   })
 
   // Center: "Payslip" button box
   const psLabel = 'Payslip'
-  const psBtnW = helveticaBold.widthOfTextAtSize(psLabel, 14) + 28
-  const psBtnX = margin + contentW / 2 - psBtnW / 2
-  const psBtnTop = headerTop + 5
-  drawRect(page, psBtnX, topY(psBtnTop + 22), psBtnW, 22, '#1a56db')
-  page.drawText(psLabel, { x: psBtnX + 14, y: topY(psBtnTop + 15), font: helveticaBold, size: 14, color: rgb(1,1,1) })
+  const psBtnW  = helveticaBold.widthOfTextAtSize(psLabel, 13) + 24
+  const psBtnX  = margin + contentW / 2 - psBtnW / 2
+  const psBtnTop = headerTop + 4
+  drawRect(page, psBtnX, topY(psBtnTop + 20), psBtnW, 20, '#1a56db')
+  page.drawText(psLabel, { x: psBtnX + 12, y: topY(psBtnTop + 14), font: helveticaBold, size: 13, color: rgb(1,1,1) })
 
-  // Right: GIGVA logo
-  const logoX = margin + contentW - 110
-  const logoTop = headerTop + 2
-  drawRect(page, logoX, topY(logoTop + 34), 34, 34, '#0ea5e9')
-  page.drawText('G', { x: logoX + 9, y: topY(logoTop + 20), font: helveticaBold, size: 18, color: rgb(1,1,1) })
-  page.drawText('GIGVA',  { x: logoX + 42, y: topY(logoTop + 16), font: helveticaBold, size: 14, color: rgb(0.055, 0.647, 0.914) })
-  page.drawText('KENYA',  { x: logoX + 42, y: topY(logoTop + 28), font: helvetica, size: 7.5, color: rgb(0.39, 0.45, 0.55) })
+  // Right: full website SVG-style logo drawn with pdf-lib primitives
+  // Blue rounded rect (approximate rx=9 with a rect — pdf-lib uses borderRadius param)
+  const logoX   = margin + contentW - 130
+  const logoTop = headerTop
+  // Draw blue box 38x38
+  page.drawRectangle({ x: logoX, y: topY(logoTop + 38), width: 38, height: 38, color: rgb(0.055, 0.647, 0.914), borderRadius: 6 })
+  // Draw 'G' arc approximation — use helveticaBold 'G' character centered
+  page.drawText('G', { x: logoX + 8, y: topY(logoTop + 23), font: helveticaBold, size: 20, color: rgb(1,1,1) })
+  // GIGVA text
+  page.drawText('GIGVA',  { x: logoX + 44, y: topY(logoTop + 20), font: helveticaBold, size: 14, color: rgb(0.055, 0.647, 0.914) })
+  page.drawText('KENYA',  { x: logoX + 45, y: topY(logoTop + 32), font: helvetica,     size: 7,  color: rgb(0.49, 0.55, 0.65) })
 
-  // Divider
-  page.drawLine({ start: { x: margin, y: topY(headerTop + 58) }, end: { x: margin + contentW, y: topY(headerTop + 58) }, thickness: 0.8, color: rgb(0.88, 0.9, 0.92) })
+  // Divider line
+  page.drawLine({ start: { x: margin, y: topY(headerTop + 54) }, end: { x: margin + contentW, y: topY(headerTop + 54) }, thickness: 0.7, color: rgb(0.88, 0.9, 0.92) })
 
   // ── SALARY SLIP TITLE BAR ──
-  const titleTop = headerTop + 64
-  drawRect(page, margin, topY(titleTop + 18), contentW, 18, '#1a56db')
+  const titleTop = headerTop + 60
+  drawRect(page, margin, topY(titleTop + 17), contentW, 17, '#1a56db')
   const titleText = 'Salary Slip of ' + emp.name + ' for ' + monthName + ' ' + slip.period_year
-  page.drawText(titleText, {
-    x: margin + contentW / 2 - helveticaBold.widthOfTextAtSize(titleText, 10) / 2,
-    y: topY(titleTop + 13), font: helveticaBold, size: 10, color: rgb(1,1,1)
-  })
+  const titleW    = helveticaBold.widthOfTextAtSize(titleText, 9.5)
+  page.drawText(titleText, { x: margin + contentW / 2 - titleW / 2, y: topY(titleTop + 12), font: helveticaBold, size: 9.5, color: rgb(1,1,1) })
 
   // ── PERSONAL DETAILS ──
-  const pdTop = titleTop + 24
-  drawRect(page, margin, topY(pdTop + 14), contentW, 14, '#1a56db')
-  page.drawText('Personal Details', { x: margin + 5, y: topY(pdTop + 10), font: helveticaBold, size: 8.5, color: rgb(1,1,1) })
+  const pdTop = titleTop + 23
+  // Payment date = last day of the payroll month
+  const lastDay     = new Date(slip.period_year, slip.period_month, 0).getDate()
+  const paymentDate = lastDay + ' ' + monthName + ' ' + slip.period_year
+  const empWorkId   = emp.employee_id || ('GV-' + slip.period_year + '-' + String(emp.id || 0).padStart(3, '0'))
 
-  const col3 = contentW / 3
-  const cellH = 13
-  function drawPdCell(label, value, cx, cy) {
-    page.drawText(label + ':', { x: cx + 3, y: topY(cy + 9), font: helveticaBold, size: 7, color: rgb(0.1, 0.34, 0.86) })
-    const lw = helveticaBold.widthOfTextAtSize(label + ': ', 7)
-    page.drawText((value || '\u2014').substring(0, 28), { x: cx + 3 + lw, y: topY(cy + 9), font: helvetica, size: 7, color: rgb(0.07, 0.09, 0.15) })
-  }
+  drawRect(page, margin, topY(pdTop + 13), contentW, 13, '#1a56db')
+  page.drawText('Personal Details', { x: margin + 5, y: topY(pdTop + 9), font: helveticaBold, size: 8, color: rgb(1,1,1) })
+
+  const halfW2 = contentW / 2
+  const cellH  = 13
+
+  // 5-row × 2-column personal details
   const pdRows = [
     [
-      { label: 'EMP NAME',     value: emp.name || '\u2014' },
-      { label: 'DEPT',         value: emp.department || '\u2014' },
-      { label: 'REF',          value: slip.ref_code || emp.employee_id || '\u2014' },
+      { label: 'EMPLOYEE NAME', value: emp.name || '-' },
+      { label: 'EMPLOYEE ID',   value: empWorkId },
     ],[
-      { label: 'ADDRESS',      value: emp.address || '\u2014' },
-      { label: 'DESIGNATION',  value: emp.designation || emp.role || '\u2014' },
-      { label: 'PERIOD START', value: slip.leave_from || '' },
+      { label: 'DESIGNATION',   value: emp.designation || emp.role || '-' },
+      { label: 'PAYMENT DATE',  value: paymentDate },
     ],[
-      { label: 'PHONE',        value: emp.phone || '\u2014' },
-      { label: 'ID NO',        value: emp.id_number || '\u2014' },
-      { label: 'PERIOD END',   value: slip.leave_to || '' },
+      { label: 'EMAIL',         value: emp.email || '-' },
+      { label: 'ADDRESS',       value: emp.address || '-' },
     ],[
-      { label: 'EMAIL',         value: emp.email || '\u2014' },
-      { label: 'DATE EMPLOYED', value: emp.date_employed || emp.hire_date || '\u2014' },
-      { label: 'BANK ACCOUNT',  value: emp.bank_account || '\u2014' },
+      { label: 'BANK ACCOUNT',  value: emp.bank_account || '-' },
+      { label: 'BANK NAME',     value: emp.bank_name || '-' },
     ],[
-      { label: 'MARITAL STATUS', value: emp.marital_status || '\u2014' },
-      { label: '',               value: '' },
-      { label: 'BANK NAME',      value: (emp.bank_name || '\u2014') + (emp.bank_code ? ' | CODE: ' + emp.bank_code : '') },
+      { label: 'REF',           value: slip.slip_ref || slip.ref_code || empWorkId },
+      { label: '',              value: '' },
     ],
   ]
-  const pdDataTop = pdTop + 14
-  pdRows.forEach((row, ri) => {
-    const cy = pdDataTop + ri * cellH
-    const bg = ri % 2 === 0 ? '#f7f9ff' : '#ffffff'
-    drawRect(page, margin, topY(cy + cellH), contentW, cellH, bg)
-    row.forEach((cell, ci) => drawPdCell(cell.label, cell.value, margin + ci * col3, cy))
-    page.drawLine({ start: { x: margin, y: topY(cy + cellH) }, end: { x: margin + contentW, y: topY(cy + cellH) }, thickness: 0.3, color: rgb(0.82, 0.85, 0.9) })
-  })
-  page.drawRectangle({ x: margin, y: topY(pdDataTop + cellH * 5), width: contentW, height: cellH * 5, borderColor: rgb(0.82, 0.85, 0.9), borderWidth: 0.5 })
-  page.drawLine({ start: { x: margin + col3, y: topY(pdDataTop) }, end: { x: margin + col3, y: topY(pdDataTop + cellH * 5) }, thickness: 0.3, color: rgb(0.82, 0.85, 0.9) })
-  page.drawLine({ start: { x: margin + col3 * 2, y: topY(pdDataTop) }, end: { x: margin + col3 * 2, y: topY(pdDataTop + cellH * 5) }, thickness: 0.3, color: rgb(0.82, 0.85, 0.9) })
 
-  // ── EARNINGS & DEDUCTIONS (side by side) ──
-  const tableTop = pdDataTop + cellH * 5 + 10
-  const halfW = contentW / 2 - 5
-  const dxCol = margin + halfW + 10
+  const pdDataTop = pdTop + 13
+  pdRows.forEach((row, ri) => {
+    const cy  = pdDataTop + ri * cellH
+    const bg  = ri % 2 === 0 ? '#f7f9ff' : '#ffffff'
+    drawRect(page, margin, topY(cy + cellH), contentW, cellH, bg)
+    row.forEach((cell, ci) => {
+      if (!cell.label) return
+      const cx = margin + ci * halfW2
+      page.drawText(cell.label + ':', { x: cx + 3, y: topY(cy + 9), font: helveticaBold, size: 6.5, color: rgb(0.1, 0.34, 0.86) })
+      const lw = helveticaBold.widthOfTextAtSize(cell.label + ': ', 6.5)
+      const val = (cell.value || '-').substring(0, 32)
+      page.drawText(val, { x: cx + 3 + lw, y: topY(cy + 9), font: helvetica, size: 6.5, color: rgb(0.07, 0.09, 0.15) })
+    })
+    page.drawLine({ start: { x: margin, y: topY(cy + cellH) }, end: { x: margin + contentW, y: topY(cy + cellH) }, thickness: 0.25, color: rgb(0.82, 0.85, 0.9) })
+  })
+  page.drawRectangle({ x: margin, y: topY(pdDataTop + cellH * 5), width: contentW, height: cellH * 5, borderColor: rgb(0.82, 0.85, 0.9), borderWidth: 0.4 })
+  page.drawLine({ start: { x: margin + halfW2, y: topY(pdDataTop) }, end: { x: margin + halfW2, y: topY(pdDataTop + cellH * 5) }, thickness: 0.25, color: rgb(0.82, 0.85, 0.9) })
+
+  // ── EARNINGS & DEDUCTIONS ──
+  const tableTop = pdDataTop + cellH * 5 + 8
+  const halfW    = contentW / 2 - 4
+  const dxCol    = margin + halfW + 8
 
   const earnings = [
     { code: 'BASIC_PAY',   name: 'Basic Pay',         amount: slip.basic_pay || 0,        bold: false },
@@ -203,95 +209,106 @@ async function buildPayslipPdf(slip, emp) {
     { code: 'GROSS_PAY',   name: 'Gross Pay',          amount: slip.gross_pay || 0,        bold: true  },
   ]
   const deductions = [
-    { code: 'NSSF_T1',    name: 'NSSF Tier I (6% of first KES 6,000)',  amount: slip.nssf_tier1 || 0,         bold: false },
-    { code: 'NSSF_T2',    name: 'NSSF Tier II (6% of next KES 12,000)', amount: slip.nssf_tier2 || 0,         bold: false },
-    { code: healthCode,   name: healthLabel,                              amount: healthAmount,                  bold: false },
-    { code: 'AHL',        name: 'Affordable Housing Levy (1.5%)',        amount: slip.housing_levy || 0,       bold: false },
-    { code: 'PAYE',       name: 'Pay As You Earn (PAYE)',                amount: slip.paye || 0,               bold: false },
-    { code: 'PER_RELIEF', name: 'Personal Tax Relief (Credit)',          amount: slip.personal_relief || 2400, bold: false },
-    { code: 'NET_TAX',    name: 'Net Tax Payable',                       amount: slip.net_tax || 0,            bold: true  },
+    { code: 'NSSF_T1',    name: 'NSSF Tier I (6% x KES 6,000)',   amount: slip.nssf_tier1 || 0,      bold: false },
+    { code: 'NSSF_T2',    name: 'NSSF Tier II (6% x KES 12,000)', amount: slip.nssf_tier2 || 0,      bold: false },
+    { code: healthCode,   name: healthLabel,                        amount: healthAmount,               bold: false },
+    { code: 'AHL',        name: 'Housing Levy (1.5%)',              amount: slip.housing_levy || 0,    bold: false },
+    { code: 'PAYE',       name: 'Pay As You Earn (PAYE)',           amount: slip.paye || 0,            bold: false },
+    { code: 'PER_RELIEF', name: 'Personal Tax Relief',              amount: slip.personal_relief||2400,bold: false },
+    { code: 'NET_TAX',    name: 'Net Tax Payable',                  amount: slip.net_tax || 0,         bold: true  },
   ]
 
-  // Earnings section
-  drawRect(page, margin, topY(tableTop + 14), halfW, 14, '#1a56db')
-  page.drawText('Earnings', { x: margin + 5, y: topY(tableTop + 10), font: helveticaBold, size: 9, color: rgb(1,1,1) })
-  const eColHdrTop = tableTop + 14
-  drawRect(page, margin, topY(eColHdrTop + 12), halfW, 12, '#1a56db')
-  page.drawText('Code',         { x: margin + 3,              y: topY(eColHdrTop + 8), font: helveticaBold, size: 7, color: rgb(1,1,1) })
-  page.drawText('Description',  { x: margin + halfW * 0.3,    y: topY(eColHdrTop + 8), font: helveticaBold, size: 7, color: rgb(1,1,1) })
-  page.drawText('Amount (KES)', { x: margin + halfW - 54,     y: topY(eColHdrTop + 8), font: helveticaBold, size: 7, color: rgb(1,1,1) })
-  let ey = eColHdrTop + 12
-  earnings.forEach((row, i) => {
-    drawRect(page, margin, topY(ey + 12), halfW, 12, i % 2 === 0 ? '#f0f5ff' : '#ffffff')
-    const font = row.bold ? helveticaBold : helvetica
-    const color = row.bold ? rgb(0.1,0.34,0.86) : rgb(0.22,0.27,0.36)
-    page.drawText(row.code, { x: margin + 3, y: topY(ey + 9), font, size: 7, color })
-    page.drawText(row.name, { x: margin + halfW * 0.3, y: topY(ey + 9), font, size: 7, color })
-    const at = fmt(row.amount)
-    page.drawText(at, { x: margin + halfW - helvetica.widthOfTextAtSize(at, 7) - 4, y: topY(ey + 9), font, size: 7, color })
-    ey += 12
-  })
+  function drawTableSection(startX, startW, title, rows, headerColor, evenColor, boldColor) {
+    drawRect(page, startX, topY(tableTop + 13), startW, 13, headerColor)
+    page.drawText(title, { x: startX + 4, y: topY(tableTop + 9), font: helveticaBold, size: 8, color: rgb(1,1,1) })
+    const colHdrTop = tableTop + 13
+    drawRect(page, startX, topY(colHdrTop + 11), startW, 11, headerColor)
+    page.drawText('Code',         { x: startX + 3,            y: topY(colHdrTop + 7.5), font: helveticaBold, size: 6, color: rgb(1,1,1) })
+    page.drawText('Description',  { x: startX + startW * 0.28, y: topY(colHdrTop + 7.5), font: helveticaBold, size: 6, color: rgb(1,1,1) })
+    page.drawText('Amount (KES)', { x: startX + startW - 50,  y: topY(colHdrTop + 7.5), font: helveticaBold, size: 6, color: rgb(1,1,1) })
+    let ry = colHdrTop + 11
+    rows.forEach((row, i) => {
+      drawRect(page, startX, topY(ry + 11), startW, 11, i % 2 === 0 ? evenColor : '#ffffff')
+      const font  = row.bold ? helveticaBold : helvetica
+      const color = row.bold ? boldColor : rgb(0.22, 0.27, 0.36)
+      page.drawText(row.code,               { x: startX + 3,                                      y: topY(ry + 8), font, size: 6.5, color })
+      page.drawText(row.name.substring(0,26),{ x: startX + startW * 0.28,                          y: topY(ry + 8), font, size: 6.5, color })
+      const at = fmt(row.amount)
+      page.drawText(at, { x: startX + startW - helvetica.widthOfTextAtSize(at, 6.5) - 3, y: topY(ry + 8), font, size: 6.5, color })
+      ry += 11
+    })
+    page.drawRectangle({ x: startX, y: topY(colHdrTop + 11 + rows.length * 11), width: startW, height: rows.length * 11, borderColor: rgb(0.82, 0.85, 0.9), borderWidth: 0.3 })
+    return ry
+  }
 
-  // Deductions section
-  drawRect(page, dxCol, topY(tableTop + 14), halfW, 14, '#9b1c1c')
-  page.drawText('Deductions', { x: dxCol + 5, y: topY(tableTop + 10), font: helveticaBold, size: 9, color: rgb(1,1,1) })
-  drawRect(page, dxCol, topY(eColHdrTop + 12), halfW, 12, '#9b1c1c')
-  page.drawText('Code',         { x: dxCol + 3,              y: topY(eColHdrTop + 8), font: helveticaBold, size: 7, color: rgb(1,1,1) })
-  page.drawText('Description',  { x: dxCol + halfW * 0.3,    y: topY(eColHdrTop + 8), font: helveticaBold, size: 7, color: rgb(1,1,1) })
-  page.drawText('Amount (KES)', { x: dxCol + halfW - 54,     y: topY(eColHdrTop + 8), font: helveticaBold, size: 7, color: rgb(1,1,1) })
-  let dy2 = eColHdrTop + 12
-  deductions.forEach((row, i) => {
-    drawRect(page, dxCol, topY(dy2 + 12), halfW, 12, i % 2 === 0 ? '#fff5f5' : '#ffffff')
-    const font = row.bold ? helveticaBold : helvetica
-    const color = row.bold ? rgb(0.73,0.11,0.11) : rgb(0.22,0.27,0.36)
-    page.drawText(row.code, { x: dxCol + 3, y: topY(dy2 + 9), font, size: 7, color })
-    page.drawText(row.name.substring(0, 36), { x: dxCol + halfW * 0.3, y: topY(dy2 + 9), font, size: 7, color })
-    const at = fmt(row.amount)
-    page.drawText(at, { x: dxCol + halfW - helvetica.widthOfTextAtSize(at, 7) - 4, y: topY(dy2 + 9), font, size: 7, color })
-    dy2 += 12
-  })
+  const earningsEnd = drawTableSection(margin, halfW, 'Earnings',   earnings,   '#1a56db', '#f0f5ff', rgb(0.1,0.34,0.86))
+  const deductsEnd  = drawTableSection(dxCol,  halfW, 'Deductions', deductions, '#9b1c1c', '#fff5f5', rgb(0.73,0.11,0.11))
+
+  // ── LEAVE SUMMARY ──
+  const leaveTop = Math.max(earningsEnd, deductsEnd) + 8
+  drawRect(page, margin, topY(leaveTop + 13), contentW, 13, '#1a56db')
+  page.drawText('Leave Summary', { x: margin + 5, y: topY(leaveTop + 9), font: helveticaBold, size: 8, color: rgb(1,1,1) })
+  // Header row
+  const leaveHdrTop = leaveTop + 13
+  drawRect(page, margin, topY(leaveHdrTop + 11), contentW, 11, '#e8f0fe')
+  const leaveCol = contentW / 4
+  page.drawText('Leave Type',         { x: margin + 4,              y: topY(leaveHdrTop + 7.5), font: helveticaBold, size: 7, color: rgb(0.12, 0.23, 0.54) })
+  page.drawText('Entitlement (Days)', { x: margin + leaveCol + 4,   y: topY(leaveHdrTop + 7.5), font: helveticaBold, size: 7, color: rgb(0.12, 0.23, 0.54) })
+  page.drawText('Taken (Days)',       { x: margin + leaveCol * 2 + 4,y: topY(leaveHdrTop + 7.5), font: helveticaBold, size: 7, color: rgb(0.12, 0.23, 0.54) })
+  page.drawText('Balance (Days)',     { x: margin + leaveCol * 3 + 4,y: topY(leaveHdrTop + 7.5), font: helveticaBold, size: 7, color: rgb(0.12, 0.23, 0.54) })
+  // Annual leave row
+  const annualLY = leaveHdrTop + 11
+  drawRect(page, margin, topY(annualLY + 11), contentW, 11, '#f7f9ff')
+  page.drawText('Annual Leave',  { x: margin + 4,               y: topY(annualLY + 7.5), font: helveticaBold, size: 7, color: rgb(0.22,0.27,0.36) })
+  page.drawText(String(annualEntitlement), { x: margin + leaveCol + 4,    y: topY(annualLY + 7.5), font: helvetica, size: 7, color: rgb(0.22,0.27,0.36) })
+  page.drawText(String(annualTaken),       { x: margin + leaveCol * 2 + 4, y: topY(annualLY + 7.5), font: helvetica, size: 7, color: rgb(0.22,0.27,0.36) })
+  page.drawText(String(annualBalance),     { x: margin + leaveCol * 3 + 4, y: topY(annualLY + 7.5), font: helveticaBold, size: 7, color: rgb(0.1,0.34,0.86) })
+  // Sick leave row
+  const sickLY = annualLY + 11
+  drawRect(page, margin, topY(sickLY + 11), contentW, 11, '#ffffff')
+  page.drawText('Sick Leave',    { x: margin + 4,               y: topY(sickLY + 7.5), font: helveticaBold, size: 7, color: rgb(0.22,0.27,0.36) })
+  page.drawText(String(sickEntitlement), { x: margin + leaveCol + 4,    y: topY(sickLY + 7.5), font: helvetica, size: 7, color: rgb(0.22,0.27,0.36) })
+  page.drawText(String(sickTaken),       { x: margin + leaveCol * 2 + 4, y: topY(sickLY + 7.5), font: helvetica, size: 7, color: rgb(0.22,0.27,0.36) })
+  page.drawText(String(sickBalance),     { x: margin + leaveCol * 3 + 4, y: topY(sickLY + 7.5), font: helveticaBold, size: 7, color: rgb(0.1,0.34,0.86) })
+  page.drawRectangle({ x: margin, y: topY(sickLY + 11), width: contentW, height: 33, borderColor: rgb(0.79, 0.85, 0.97), borderWidth: 0.4 })
 
   // ── NET PAY SUMMARY BAR ──
-  const summaryTop = Math.max(ey, dy2) + 10
+  const summaryTop = sickLY + 11 + 8
   const col3w = contentW / 3
-  drawRect(page, margin,             topY(summaryTop + 28), col3w, 28, '#1a56db')
-  drawRect(page, margin + col3w,     topY(summaryTop + 28), col3w, 28, '#1e3a8a')
-  drawRect(page, margin + col3w * 2, topY(summaryTop + 28), col3w, 28, '#1e3a8a')
-
-  page.drawText('GROSS PAY', { x: margin + 6, y: topY(summaryTop + 11), font: helveticaBold, size: 8, color: rgb(1,1,1) })
-  page.drawText('KES ' + fmt(slip.gross_pay || 0), { x: margin + 6, y: topY(summaryTop + 23), font: helveticaBold, size: 10, color: rgb(1,1,1) })
-  page.drawText('TOTAL DEDUCTIONS', { x: margin + col3w + 6, y: topY(summaryTop + 11), font: helveticaBold, size: 8, color: rgb(1,1,1) })
-  page.drawText('KES ' + fmt(slip.total_deductions || 0), { x: margin + col3w + 6, y: topY(summaryTop + 23), font: helveticaBold, size: 10, color: rgb(1,1,1) })
-  page.drawText('NET PAY', { x: margin + col3w * 2 + 6, y: topY(summaryTop + 11), font: helveticaBold, size: 8, color: rgb(1,1,1) })
-  page.drawText('KES ' + fmt(slip.net_pay || 0), { x: margin + col3w * 2 + 6, y: topY(summaryTop + 23), font: helveticaBold, size: 10, color: rgb(0.98,0.75,0.14) })
+  drawRect(page, margin,             topY(summaryTop + 26), col3w, 26, '#1a56db')
+  drawRect(page, margin + col3w,     topY(summaryTop + 26), col3w, 26, '#1e3a8a')
+  drawRect(page, margin + col3w * 2, topY(summaryTop + 26), col3w, 26, '#1e3a8a')
+  page.drawText('GROSS PAY',       { x: margin + 5, y: topY(summaryTop + 10), font: helveticaBold, size: 7.5, color: rgb(1,1,1) })
+  page.drawText('KES ' + fmt(slip.gross_pay || 0), { x: margin + 5, y: topY(summaryTop + 22), font: helveticaBold, size: 9, color: rgb(1,1,1) })
+  page.drawText('TOTAL DEDUCTIONS',{ x: margin + col3w + 5, y: topY(summaryTop + 10), font: helveticaBold, size: 7.5, color: rgb(1,1,1) })
+  page.drawText('KES ' + fmt(slip.total_deductions || 0), { x: margin + col3w + 5, y: topY(summaryTop + 22), font: helveticaBold, size: 9, color: rgb(1,1,1) })
+  page.drawText('NET PAY',         { x: margin + col3w * 2 + 5, y: topY(summaryTop + 10), font: helveticaBold, size: 7.5, color: rgb(1,1,1) })
+  page.drawText('KES ' + fmt(slip.net_pay || 0), { x: margin + col3w * 2 + 5, y: topY(summaryTop + 22), font: helveticaBold, size: 9, color: rgb(0.98,0.75,0.14) })
 
   // ── PREPARED BY + STAMP + AUTHORIZED SIGNATURE ──
-  const footerTop = summaryTop + 38
-  page.drawText('Prepared By: FATUMA KAMAU', { x: margin, y: topY(footerTop + 12), font: helveticaBold, size: 9, color: rgb(0.07,0.09,0.15) })
-  // Authorized signature line
-  const sigX = margin + contentW - 200
-  page.drawText('Authorized Signature:', { x: sigX, y: topY(footerTop + 62), font: helvetica, size: 8, color: rgb(0.22,0.27,0.36) })
-  const sigLabelW2 = helvetica.widthOfTextAtSize('Authorized Signature: ', 8)
-  page.drawLine({ start: { x: sigX + sigLabelW2, y: topY(footerTop + 62) }, end: { x: sigX + 190, y: topY(footerTop + 62) }, thickness: 0.7, color: rgb(0.22,0.27,0.36) })
-  // Stamp image
+  const footerTop = summaryTop + 36
+  page.drawText('Prepared By: FATUMA KAMAU', { x: margin, y: topY(footerTop + 11), font: helveticaBold, size: 8.5, color: rgb(0.07,0.09,0.15) })
+  const sigX = margin + contentW - 190
+  page.drawText('Authorized Signature:', { x: sigX, y: topY(footerTop + 60), font: helvetica, size: 8, color: rgb(0.22,0.27,0.36) })
+  const sigLW = helvetica.widthOfTextAtSize('Authorized Signature: ', 8)
+  page.drawLine({ start: { x: sigX + sigLW, y: topY(footerTop + 60) }, end: { x: sigX + 185, y: topY(footerTop + 60) }, thickness: 0.7, color: rgb(0.22,0.27,0.36) })
+  // Stamp
   try {
     const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'
     const stampRes = await fetch(siteBase + '/gigva-stamp.png')
     if (stampRes.ok) {
       const stampBytes = await stampRes.arrayBuffer()
       const stampImg   = await pdfDoc.embedPng(stampBytes)
-      page.drawImage(stampImg, { x: margin, y: topY(footerTop + 88), width: 70, height: 70, opacity: 0.82 })
+      page.drawImage(stampImg, { x: margin, y: topY(footerTop + 85), width: 68, height: 68, opacity: 0.82 })
     }
   } catch (_) { /* stamp optional */ }
 
   // ── BOTTOM FOOTER ──
-  const footDivTop = footerTop + 98
-  page.drawLine({ start: { x: margin, y: topY(footDivTop) }, end: { x: margin + contentW, y: topY(footDivTop) }, thickness: 0.5, color: rgb(0.82,0.84,0.87) })
-  const footText = 'Gigva Kenya  |  +254 701 443 444  |  hello@gigva.co.ke  |  www.gigva.co.ke'
-  page.drawText(footText, {
-    x: margin + contentW / 2 - helvetica.widthOfTextAtSize(footText, 8) / 2,
-    y: topY(footDivTop + 12), font: helvetica, size: 8, color: rgb(0.42,0.45,0.50)
-  })
+  const footDivTop = footerTop + 95
+  page.drawLine({ start: { x: margin, y: topY(footDivTop) }, end: { x: margin + contentW, y: topY(footDivTop) }, thickness: 0.5, color: rgb(0.88,0.9,0.92) })
+  const footText = 'Gigva Kenya  •  +254 701 443 444  •  hello@gigva.co.ke  •  www.gigva.co.ke'
+  const ftW = helvetica.widthOfTextAtSize(footText, 7)
+  page.drawText(footText, { x: margin + contentW / 2 - ftW / 2, y: topY(footDivTop + 10), font: helvetica, size: 7, color: rgb(0.42,0.47,0.53) })
 
   const pdfBytes = await pdfDoc.save()
   return Buffer.from(pdfBytes)
