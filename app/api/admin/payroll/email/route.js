@@ -332,13 +332,22 @@ export async function POST(req) {
     })
     if (error) return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
 
-    // Store in inbox_messages + message_attachments for staff inbox
+    // Store in sent_emails (first, for FK constraint), inbox_messages, and message_attachments
     try {
       const database = db()
       ensureInboxSchema(database)
       const now = new Date().toISOString()
       const msgId = 'payroll-' + (slip.id || slip.slip_ref || 'x') + '-' + Date.now().toString(36)
 
+      // 1. Insert into sent_emails FIRST (message_attachments has FK → sent_emails.id)
+      database.prepare(
+        'INSERT OR IGNORE INTO sent_emails (id,from_email,to_email,subject,body_text,body_html,resend_id,sent_at) VALUES (?,?,?,?,?,?,?,?)'
+      ).run(msgId, 'cto@gigva.co.ke', employee.email,
+        'Your Payslip for ' + monthName + ' ' + slip.period_year + ' - Gigva Kenya',
+        'Payslip for ' + monthName + ' ' + slip.period_year + '. See PDF attachment.',
+        fullBody, data?.id || '', now)
+
+      // 2. Insert into inbox_messages (same id as sent_emails for easy cross-reference)
       database.prepare(
         'INSERT OR IGNORE INTO inbox_messages (id,to_email,from_email,from_name,subject,body_text,body_html,message_id,is_read,created_at) VALUES (?,?,?,?,?,?,?,?,0,?)'
       ).run(msgId, employee.email, 'cto@gigva.co.ke', 'Gigva Payroll',
@@ -346,15 +355,10 @@ export async function POST(req) {
         'Payslip for ' + monthName + ' ' + slip.period_year + '. See PDF attachment.',
         fullBody, data?.id || msgId, now)
 
+      // 3. Insert attachment with message_id = msgId (satisfies FK → sent_emails.id)
       database.prepare(
         'INSERT OR IGNORE INTO message_attachments (id,message_id,filename,mime_type,size,data,created_at) VALUES (?,?,?,?,?,?,?)'
       ).run(msgId + '-a1', msgId, filename, 'application/pdf', pdfBuffer.length, pdfBuffer, now)
-
-      database.prepare(
-        'INSERT OR IGNORE INTO sent_emails (id,from_email,to_email,subject,body_text,body_html,resend_id,sent_at) VALUES (?,?,?,?,?,?,?,?)'
-      ).run(msgId + '-s', 'cto@gigva.co.ke', employee.email,
-        'Your Payslip for ' + monthName + ' ' + slip.period_year + ' - Gigva Kenya',
-        'Payslip ' + monthName + ' ' + slip.period_year, fullBody, data?.id || '', now)
     } catch(e) {
       console.error('[payroll/email] db store error:', e.message)
     }
