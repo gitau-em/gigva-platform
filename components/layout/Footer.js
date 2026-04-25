@@ -6,17 +6,17 @@ const COLS = [
     links: [
       { href: '/product',   label: 'Product overview' },
       { href: '/features',  label: 'Features'         },
-      { href: '/pricing',   label: 'Pricing'          },
       { href: '/saas-platform-kenya', label: 'SaaS Platform Kenya' },
     ],
   },
   {
     title: "Who it's for",
     links: [
-      { href: '/product#retail',       label: 'Retail shops'       },
-      { href: '/product#logistics',    label: 'Logistics firms'    },
-      { href: '/product#restaurants',  label: 'Restaurants & F&B'  },
-      { href: '/product#services',     label: 'Service businesses' },
+      { href: '/for/retail',       label: 'Retail Shops'         },
+      { href: '/for/logistics',    label: 'Logistics & Transport' },
+      { href: '/for/hospitality',  label: 'Hotels & Restaurants'  },
+      { href: '/for/healthcare',   label: 'Clinics & Pharmacies'  },
+      { href: '/for/smes',         label: 'SMEs & Services'       },
     ],
   },
   {
