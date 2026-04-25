@@ -2,7 +2,7 @@
  * app/api/admin/inbox/attachments/[id]/route.js
  * GET /api/admin/inbox/attachments/:id
  * Download an attachment by its attachment id.
- * Requires valid staff/admin JWT.
+ * Requires valid staff/admin JWT (via Authorization header OR ?token= query param).
  */
 
 import { NextResponse } from 'next/server'
@@ -11,7 +11,14 @@ import { verifyToken }  from '@/lib/auth'
 
 function getUser(req) {
   const auth  = req.headers.get('authorization') || ''
-  const token = auth.replace(/^Bearer\s+/i, '').trim()
+  let token = auth.replace(/^Bearer\s+/i, '').trim()
+  // Also accept token as query param (needed for browser <a> download links)
+  if (!token) {
+    try {
+      const { searchParams } = new URL(req.url)
+      token = searchParams.get('token') || ''
+    } catch(e) {}
+  }
   if (!token) return null
   try { return verifyToken(token) || null } catch { return null }
 }
@@ -57,7 +64,8 @@ export async function GET(req, { params }) {
           ).get(row.message_id)
           if (email) {
             const ue = user.email.toLowerCase()
-            hasAccess = email.from_email.toLowerCase() === ue || email.to_email.toLowerCase().includes(ue)
+            hasAccess = email.from_email.toLowerCase() === ue ||
+                        email.to_email.toLowerCase().includes(ue)
           }
         } catch(e) {}
       }
@@ -67,8 +75,8 @@ export async function GET(req, { params }) {
       }
     }
 
-    // Return file as download
-    const fileData = Buffer.isBuffer(row.data) ? row.data : Buffer.from(row.data)
+    // Return the file as a download
+    const fileData = row.data instanceof Buffer ? row.data : Buffer.from(row.data)
 
     return new Response(fileData, {
       status: 200,
@@ -76,10 +84,11 @@ export async function GET(req, { params }) {
         'Content-Type': row.mime_type || 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${row.filename}"`,
         'Content-Length': String(fileData.length),
+        'Cache-Control': 'no-store',
       },
     })
   } catch (err) {
-    console.error('[attachments download GET]', err)
+    console.error('[inbox/attachments/[id] GET]', err)
     return NextResponse.json({ ok: false, msg: 'Server error.' }, { status: 500 })
   }
 }
