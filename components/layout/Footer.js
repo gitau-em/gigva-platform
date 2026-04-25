@@ -58,7 +58,7 @@ export default function Footer() {
               </svg>
             </Link>
             <p className="text-sm leading-relaxed text-slate-500 max-w-[240px] mb-4">
-              Kenya&apos;s leading SaaS platform for business automation. M-Pesa reconciliation, payroll,
+              Kenya&apos;s leading SaaS platform for business automation. M-Pesa automation, reconciliation,
               and AI-powered analytics for Nairobi businesses and SMEs across Kenya.
             </p>
             <div className="space-y-1 text-xs text-slate-600">
