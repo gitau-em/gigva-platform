@@ -69,6 +69,31 @@ function buildPayslipHtml(slip, emp) {
       <td style="${td2}${it.code==='NET_TAX'?'font-weight:bold;':''}color:#b91c1c;">${fmt(it.amount)}</td>
     </tr>`).join('')
 
+  // Leave section
+  const annualEntitlement = slip.annual_leave_entitlement || 25
+  const annualTaken = slip.annual_leave_taken || 0
+  const annualBalance = slip.annual_leave_balance !== undefined ? slip.annual_leave_balance : (annualEntitlement - annualTaken)
+  const sickEntitlement = slip.sick_leave_entitlement || 10
+  const sickTaken = slip.sick_leave_taken || 0
+  const sickBalance = slip.sick_leave_balance !== undefined ? slip.sick_leave_balance : (sickEntitlement - sickTaken)
+
+  const leaveHtml = `
+  <table style="width:100%;border-collapse:collapse;border:1px solid #ccc;margin-bottom:12px;">
+    <tr style="background:#1a56db;color:#fff;"><td colspan="6" style="padding:6px 10px;font-weight:bold;">Leave Summary</td></tr>
+    <tr>
+      <td style="${td1}"><b>Annual Leave Entitlement:</b></td><td style="${td1}">${annualEntitlement} days</td>
+      <td style="${td1}"><b>Annual Leave Taken:</b></td><td style="${td1}">${annualTaken} days</td>
+      <td style="${td1}"><b>Annual Leave Balance:</b></td><td style="${td1};font-weight:bold;color:#1a56db;">${annualBalance} days</td>
+    </tr>
+    <tr style="background:#f9fbff;">
+      <td style="${td1}"><b>Sick Leave Entitlement:</b></td><td style="${td1}">${sickEntitlement} days</td>
+      <td style="${td1}"><b>Sick Leave Taken:</b></td><td style="${td1}">${sickTaken} days</td>
+      <td style="${td1}"><b>Sick Leave Balance:</b></td><td style="${td1};font-weight:bold;color:#1a56db;">${sickBalance} days</td>
+    </tr>
+  </table>`
+
+  const dash = (v) => v || '&mdash;'
+
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:20px;}</style>
 </head><body>
@@ -82,8 +107,9 @@ function buildPayslipHtml(slip, emp) {
   <tr style="background:#1a56db;color:#fff;"><td colspan="3" style="padding:6px 10px;font-weight:bold;">Employee Details</td></tr>
   <tr><td style="${td1}"><b>NAME:</b> ${emp.name}</td><td style="${td1}"><b>DEPT:</b> ${emp.department||''}</td><td style="${td1}"><b>REF:</b> ${slip.slip_ref||''}</td></tr>
   <tr><td style="${td1}"><b>EMAIL:</b> ${emp.email||''}</td><td style="${td1}"><b>DESIGNATION:</b> ${emp.designation||''}</td><td style="${td1}"><b>PERIOD:</b> ${monthName} ${slip.period_year}</td></tr>
-  <tr><td style="${td1}"><b>BANK ACCOUNT:</b> ${emp.bank_account||''}</td><td style="${td1}"><b>BANK NAME:</b> ${emp.bank_name||''}</td><td style="${td1}"><b>MARITAL STATUS:</b> ${emp.marital_status||'Single'}</td></tr>
+  <tr><td style="${td1}"><b>BANK ACCOUNT:</b> ${dash(emp.bank_account)}</td><td style="${td1}"><b>BANK NAME:</b> ${dash(emp.bank_name)}</td><td style="${td1}"><b>MARITAL STATUS:</b> ${emp.marital_status||'Single'}</td></tr>
 </table>
+${leaveHtml}
 <table style="width:100%;border-collapse:collapse;margin-bottom:12px;"><tr valign="top">
 <td style="width:50%;padding-right:6px;">
   <table style="width:100%;border-collapse:collapse;border:1px solid #ccc;">
@@ -96,8 +122,7 @@ function buildPayslipHtml(slip, emp) {
   <table style="width:100%;border-collapse:collapse;border:1px solid #ccc;">
     <tr><th colspan="3" style="${th};background:#b91c1c;">Deductions</th></tr>
     <tr><th style="${th}">Code</th><th style="${th}">Description</th><th style="${th};text-align:right;">Amount (KES)</th></tr>
-    ${dedHtml}
-  </table>
+    ${dedHtml}  </table>
 </td>
 </tr></table>
 <table style="width:100%;border-collapse:collapse;border:1px solid #1a56db;margin-bottom:12px;">
@@ -138,17 +163,23 @@ export async function POST(req) {
       if (sigRow?.html) signatureHtml = '<br><br><hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">' + sigRow.html
     } catch(e) {}
 
+    // Email body with summary + prominent download attachment notice
     const emailBody = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;max-width:600px;margin:0 auto;padding:24px;">' +
       '<div style="text-align:center;margin-bottom:16px;">' + GIGVA_LOGO + '</div>' +
       '<p>Dear ' + employee.name + ',</p>' +
-      '<p>Please find attached your payslip for <strong>' + monthName + ' ' + slip.period_year + '</strong>.</p>' +
-      '<ul style="font-size:13px;line-height:1.8;">' +
-      '<li><b>Gross Pay:</b> KES ' + fmt(slip.gross_pay) + '</li>' +
-      '<li><b>Total Deductions:</b> KES ' + fmt(slip.total_deductions||(slip.gross_pay-slip.net_pay)) + '</li>' +
-      '<li><b>Net Pay:</b> KES ' + fmt(slip.net_pay) + '</li>' +
-      '</ul>' +
+      '<p>Please find your payslip for <strong>' + monthName + ' ' + slip.period_year + '</strong> attached to this email as an HTML file.</p>' +
+      '<table style="width:100%;border-collapse:collapse;background:#f0f5ff;border:1px solid #1a56db;border-radius:6px;margin:12px 0;">' +
+      '<tr><td style="padding:10px 14px;font-weight:bold;color:#1a56db;font-size:13px;" colspan="2">Payslip Summary &mdash; ' + monthName + ' ' + slip.period_year + '</td></tr>' +
+      '<tr><td style="padding:6px 14px;font-size:13px;">Gross Pay:</td><td style="padding:6px 14px;font-weight:bold;text-align:right;">KES ' + fmt(slip.gross_pay) + '</td></tr>' +
+      '<tr style="background:#e8f0fe;"><td style="padding:6px 14px;font-size:13px;">Total Deductions:</td><td style="padding:6px 14px;font-weight:bold;text-align:right;color:#b91c1c;">KES ' + fmt(slip.total_deductions||(slip.gross_pay-slip.net_pay)) + '</td></tr>' +
+      '<tr><td style="padding:6px 14px;font-size:13px;font-weight:bold;">Net Pay:</td><td style="padding:6px 14px;font-weight:bold;text-align:right;color:#0ea5e9;font-size:15px;">KES ' + fmt(slip.net_pay) + '</td></tr>' +
+      '</table>' +
+      '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:12px 16px;margin:12px 0;">' +
+      '<p style="margin:0;font-size:13px;"><strong>&#128206; Payslip Attachment:</strong> Your full payslip is attached as <strong>' + filename + '</strong>. ' +
+      'Open it in your browser to view, print, or save as PDF.</p>' +
+      '</div>' +
       '<p style="font-size:12px;color:#666;">For questions, contact HR at <a href="mailto:hello@gigva.co.ke">hello@gigva.co.ke</a>.</p>' +
-      '<p>Best regards,<br><b>Gigva HR &amp; Payroll Team</b></p>' +
+      '<p>Best regards,<br><b>Gigva HR &amp; People Team</b></p>' +
       signatureHtml + '</div>'
 
     const { data, error } = await resend.emails.send({
