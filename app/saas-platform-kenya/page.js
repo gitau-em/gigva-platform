@@ -5,7 +5,7 @@ import { CheckCircle2, ArrowRight, MapPin, Star, Zap, Shield, BarChart3, Users }
 export const metadata = {
   title: 'Top SaaS Platforms in Kenya | Gigva — Leading Business Software in Nairobi',
   description:
-    "Discover why Gigva is Kenya's leading SaaS platform. AI-powered business software built in Nairobi for Kenyan SMEs — M-Pesa reconciliation, payroll, analytics, and more.",
+    "Discover why Gigva is Kenya's leading SaaS platform. AI-powered business software built in Nairobi for Kenyan SMEs — M-Pesa automation, reconciliation, analytics, and more.",
   keywords: [
     'SaaS platform Kenya',
     'SaaS Kenya',
@@ -23,7 +23,7 @@ export const metadata = {
   alternates: { canonical: 'https://gigva.co.ke/saas-platform-kenya' },
   openGraph: {
     title: 'Top SaaS Platforms in Kenya | Gigva',
-    description: "Gigva is Kenya's leading SaaS platform — built in Nairobi for Kenyan businesses. M-Pesa reconciliation, payroll, and AI analytics.",
+    description: "Gigva is Kenya's leading SaaS platform — built in Nairobi for Kenyan businesses. M-Pesa automation, reconciliation, and AI analytics.",
     url: 'https://gigva.co.ke/saas-platform-kenya',
     type: 'website',
     locale: 'en_KE',
@@ -38,8 +38,8 @@ const features = [
   },
   {
     icon: Users,
-    title: 'Kenya-Compliant Payroll',
-    desc: 'Full PAYE, NSSF Tier I & II, SHIF/NHIF, and Affordable Housing Levy calculations — always up to date with KRA regulations.',
+    title: 'M-Pesa Automation',
+    desc: 'Seamlessly automate M-Pesa payments, STK push, reconciliation, and real-time transaction tracking for your business.',
   },
   {
     icon: BarChart3,
@@ -54,9 +54,9 @@ const features = [
 ]
 
 const competitors = [
-  { name: 'Gigva', kenyaBuilt: true, mPesa: true, payroll: true, kenyaTax: true, nairobi: true, price: 'From KSh 2,999/mo' },
-  { name: 'Generic Global SaaS A', kenyaBuilt: false, mPesa: false, payroll: true, kenyaTax: false, nairobi: false, price: 'USD pricing' },
-  { name: 'Generic Global SaaS B', kenyaBuilt: false, mPesa: false, payroll: true, kenyaTax: false, nairobi: false, price: 'USD pricing' },
+  { name: 'Gigva', kenyaBuilt: true, mPesa: true, mPesaAutomation: true, kenyaTax: true, nairobi: true, price: 'From KSh 2,999/mo' },
+  { name: 'Generic Global SaaS A', kenyaBuilt: false, mPesa: false, mPesaAutomation: false, kenyaTax: false, nairobi: false, price: 'USD pricing' },
+  { name: 'Generic Global SaaS B', kenyaBuilt: false, mPesa: false, mPesaAutomation: false, kenyaTax: false, nairobi: false, price: 'USD pricing' },
 ]
 
 const counties = [
@@ -85,7 +85,7 @@ export default function SaasKenyaPage() {
           </p>
           <p className="text-sky-200 text-sm mb-8 max-w-xl mx-auto">
             Over 1,500 businesses across Kenya use Gigva to automate operations, reconcile
-            M-Pesa payments, and manage payroll with Kenya-compliant tax calculations.
+            M-Pesa payments, and automate M-Pesa reconciliation and business transactions.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <TrackableLink href="/trial" eventName="start_free_trial" eventParams={{ page: '/saas-platform-kenya', cta_position: 'hero' }} className="bg-white text-sky-800 font-bold px-8 py-3 rounded-lg hover:bg-sky-50 transition-colors inline-flex items-center gap-2 justify-center">
@@ -118,7 +118,7 @@ export default function SaasKenyaPage() {
             </p>
             <p className="text-slate-600 text-base leading-relaxed">
               <strong>Gigva was built specifically as a SaaS platform in Kenya</strong>,
-              with M-Pesa at its core, Kenya-compliant payroll calculations, and data hosted
+              with M-Pesa automation at its core, Kenya-compliant tax tools, and data hosted
               in Nairobi to meet the Kenya Data Protection Act 2019.
             </p>
           </div>
@@ -280,7 +280,7 @@ export default function SaasKenyaPage() {
           </h2>
           <p className="text-sky-200 mb-8">
             Join 1,500+ Kenyan businesses using Gigva to automate operations, reconcile
-            M-Pesa, and run Kenya-compliant payroll. Serving Nairobi and across Kenya.
+            M-Pesa, and automate business payments and reconciliation. Serving Nairobi and across Kenya.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <TrackableLink href="/trial" eventName="start_free_trial" eventParams={{ page: '/saas-platform-kenya', cta_position: 'bottom' }} className="bg-white text-sky-800 font-bold px-8 py-3 rounded-lg hover:bg-sky-50 transition-colors inline-flex items-center gap-2 justify-center">
