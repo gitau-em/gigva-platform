@@ -13,7 +13,7 @@ export const metadata = {
           template: '%s | Gigva Kenya',
     },
     description:
-          'Gigva is a leading SaaS platform in Kenya offering AI-powered analytics, M-Pesa reconciliation, payroll, payments, and marketplace solutions for businesses in Nairobi and across Kenya.',
+          'Gigva is a leading SaaS platform in Kenya offering AI-powered analytics, M-Pesa automation, reconciliation, payments, and marketplace solutions for businesses in Nairobi and across Kenya.',
     keywords: [
           'SaaS platform Kenya',
           'business software Kenya',
@@ -35,13 +35,13 @@ export const metadata = {
           url: 'https://gigva.co.ke',
           title: 'Gigva | Leading SaaS Platform in Kenya for Business Automation',
           description:
-                  'Gigva is Kenya\'s leading SaaS platform. AI-powered analytics, M-Pesa reconciliation, payroll, and marketplace solutions for Nairobi businesses and SMEs across Kenya.',
+                  'Gigva is Kenya\'s leading SaaS platform. AI-powered analytics, M-Pesa automation, reconciliation, and marketplace solutions for Nairobi businesses and SMEs across Kenya.',
           images: [
             {
                       url: 'https://gigva.co.ke/og-image.png',
                       width: 1200,
                       height: 630,
-                      alt: 'Gigva — Kenya SaaS Platform',
+                      alt: 'Gigva â Kenya SaaS Platform',
             },
                 ],
     },
@@ -49,7 +49,7 @@ export const metadata = {
           card: 'summary_large_image',
           title: 'Gigva | Leading SaaS Platform in Kenya',
           description:
-                  'AI-powered SaaS for Kenyan businesses: M-Pesa reconciliation, payroll, analytics, marketplace. Serving businesses across Kenya and East Africa.',
+                  'AI-powered SaaS for Kenyan businesses: M-Pesa automation, reconciliation, analytics, marketplace. Serving businesses across Kenya and East Africa.',
     },
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'),
     alternates: { canonical: 'https://gigva.co.ke' },
@@ -65,7 +65,7 @@ const jsonLd = {
     name: 'Gigva',
     url: 'https://gigva.co.ke',
     logo: 'https://gigva.co.ke/logo.png',
-    description: 'Leading SaaS platform in Kenya for business automation, M-Pesa reconciliation, payroll, and AI-powered analytics.',
+    description: 'Leading SaaS platform in Kenya for business automation, M-Pesa reconciliation, and AI-powered analytics.',
     address: {
           '@type': 'PostalAddress',
           streetAddress: 'Westlands Business Park',
@@ -110,9 +110,9 @@ export default function RootLayout({ children }) {
         {children}
           </main>
         <Footer />
-        {/* Tawk.to live chat — loads async after page render */}
+        {/* Tawk.to live chat â loads async after page render */}
         <TawkChat />
-        {/* Google Analytics 4 — GA4 tag loads non-blocking after page is interactive */}
+        {/* Google Analytics 4 â GA4 tag loads non-blocking after page is interactive */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
           strategy="afterInteractive"
