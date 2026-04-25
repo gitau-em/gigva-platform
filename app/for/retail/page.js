@@ -31,7 +31,7 @@ const RETAIL_FEATURES = [
   {
     icon: AlertCircle,
     title: 'Fraud & Discrepancy Detection',
-    desc: 'Gigva flags cashier shortfalls, duplicate M-Pesa references, and payments that don't match any active invoice. Suspicious transactions surface in your alerts within 30 seconds.',
+    desc: 'Gigva flags cashier shortfalls, duplicate M-Pesa references, and payments that don’t match any active invoice. Suspicious transactions surface in your alerts within 30 seconds.',
   },
   {
     icon: Users,
