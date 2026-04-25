@@ -255,7 +255,8 @@ function PayslipDocument({ slip, emp }) {
   )
 }
 
- default function PayrollPage() {
+
+export default function PayrollPage() {
   const router = useRouter()
   const [token, setToken] = useState(null)
   const [user, setUser] = useState(null)
