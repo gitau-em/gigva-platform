@@ -4,7 +4,6 @@ import HowItWorks        from '@/components/home/HowItWorks'
 import DashboardPreview  from '@/components/product/DashboardPreview'
 import Modules           from '@/components/home/Modules'
 import SocialProof       from '@/components/home/SocialProof'
-import PricingSnippet    from '@/components/home/PricingSnippet'
 import CtaBanner         from '@/components/home/CtaBanner'
 import Link              from 'next/link'
 
@@ -31,10 +30,9 @@ export default function HomePage() {
       <HowItWorks />
       <Modules />
       <SocialProof />
-      <PricingSnippet />
       <CtaBanner />
 
-      {/* Internal link to Kenya SaaS landing page â boosts topical authority */}
+      {/* Internal link to Kenya SaaS landing page — boosts topical authority */}
       <section className="bg-sky-50 border-t border-sky-100 py-10 px-5 text-center">
         <p className="text-slate-600 text-sm mb-3">
           Looking for the best SaaS platform in Kenya?
@@ -43,7 +41,7 @@ export default function HomePage() {
           href="/saas-platform-kenya"
           className="inline-flex items-center gap-2 text-sky-600 font-semibold text-sm hover:underline"
         >
-          Discover why Gigva leads Kenya's SaaS market &rarr;
+          Discover why Gigva leads Kenya&apos;s SaaS market &rarr;
         </Link>
       </section>
     </>
