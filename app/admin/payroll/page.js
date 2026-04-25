@@ -168,7 +168,7 @@ function PayslipDocument({ slip, emp }) {
                 <tr key={row.code} style={{ backgroundColor: i % 2 === 0 ? '#f0f5ff' : '#fff' }}>
                   <td style={{ padding: '3px 6px', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', width: '30%' }}>{row.code}</td>
                   <td style={{ padding: '3px 6px', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.name}</td>
-                  <td style={{ padding: '3px 6px', textAlign: 'right', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>KES {fmt(row.amount)}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>KES {fmtKsh(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -182,7 +182,7 @@ function PayslipDocument({ slip, emp }) {
                 <tr key={row.code} style={{ backgroundColor: i % 2 === 0 ? '#fff5f5' : '#fff' }}>
                   <td style={{ padding: '3px 6px', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', width: '28%' }}>{row.code}</td>
                   <td style={{ padding: '3px 6px', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.name}</td>
-                  <td style={{ padding: '3px 6px', textAlign: 'right', color: row.bold ? '#b91c1c' : '#dc2626', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>KES {fmt(row.amount)}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: row.bold ? '#b91c1c' : '#dc2626', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>KES {fmtKsh(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -194,14 +194,14 @@ function PayslipDocument({ slip, emp }) {
       <div style={{ backgroundColor: '#1a56db', margin: '10px 20px 0', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div style={{ fontSize: '10px', color: '#fff' }}>
           <span style={{ fontWeight: 'bold' }}>GROSS PAY</span>&nbsp;
-          <span style={{ color: '#e0f2fe' }}>KES {fmt(slip.gross_pay)}</span>
+          <span style={{ color: '#e0f2fe' }}>KES {fmtKsh(slip.gross_pay)}</span>
         </div>
         <div style={{ fontSize: '10px', color: '#fff' }}>
           <span style={{ fontWeight: 'bold' }}>DEDUCTIONS</span>&nbsp;
-          <span style={{ color: '#fca5a5' }}>KES {fmt(slip.total_deductions || (slip.gross_pay - slip.net_pay))}</span>
+          <span style={{ color: '#fca5a5' }}>KES {fmtKsh(slip.total_deductions || (slip.gross_pay - slip.net_pay))}</span>
         </div>
         <div style={{ fontSize: '13px', color: '#fbbf24', fontWeight: 'bold' }}>
-          NET PAY: KES {fmt(slip.net_pay)}
+          NET PAY: KES {fmtKsh(slip.net_pay)}
         </div>
       </div>
 
