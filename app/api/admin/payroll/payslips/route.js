@@ -6,14 +6,16 @@ function checkAccess(user) {
   return user && ['cto','people_ops','superadmin'].includes(user.role)
 }
 
-function calcPAYE(taxable) {
+// KRA Tax Bands: returns GROSS TAX (before personal relief)
+function calcGrossTax(taxable) {
   let tax = 0
-  if (taxable <= 24000) tax = taxable * 0.10
-  else if (taxable <= 32333) tax = 2400 + (taxable - 24000) * 0.25
-  else if (taxable <= 500000) tax = 2400 + 2083.25 + (taxable - 32333) * 0.30
-  else if (taxable <= 800000) tax = 2400 + 2083.25 + 140300.1 + (taxable - 500000) * 0.325
-  else tax = 2400 + 2083.25 + 140300.1 + 97500 + (taxable - 800000) * 0.35
-  return Math.max(0, tax)
+  if (taxable <= 0) return 0
+  tax += Math.min(taxable, 24000) * 0.10
+  if (taxable > 24000) tax += Math.min(taxable - 24000, 32333 - 24000) * 0.25
+  if (taxable > 32333) tax += Math.min(taxable - 32333, 500000 - 32333) * 0.30
+  if (taxable > 500000) tax += Math.min(taxable - 500000, 800000 - 500000) * 0.325
+  if (taxable > 800000) tax += (taxable - 800000) * 0.35
+  return Math.round(tax * 100) / 100
 }
 
 // NHIF rates (applicable up to November 2024)
@@ -37,25 +39,25 @@ function calcNHIF(gross) {
   return 1700
 }
 
-// SHIF rates: 2.75% of gross, minimum KES 300 (applicable from December 2024)
+// SHIF: 2.75% of gross (applicable from December 2024)
 function calcSHIF(gross) {
-  return Math.max(300, gross * 0.0275)
+  return Math.round(gross * 0.0275 * 100) / 100
 }
 
-// NSSF 2013 Act - Tier I + Tier II
+// NSSF 2013 Act: Tier I + Tier II. Flat KES 1,080 for gross >= 18,000
 function calcNSSF(gross) {
   const lel = 6000, uel = 18000
   const tierI = Math.min(gross, lel) * 0.06
   const tierII = Math.max(0, Math.min(gross, uel) - lel) * 0.06
-  return { tierI, tierII, total: tierI + tierII }
+  return { tierI: Math.round(tierI * 100) / 100, tierII: Math.round(tierII * 100) / 100, total: Math.round((tierI + tierII) * 100) / 100 }
 }
 
 // Affordable Housing Levy: 1.5% of gross
 function calcHousingLevy(gross) {
-  return gross * 0.015
+  return Math.round(gross * 0.015 * 100) / 100
 }
 
-// Determine if payslip should use SHIF (Dec 2024+) or NHIF (up to Nov 2024)
+// Determine if SHIF (Dec 2024+) or NHIF applies
 function usesSHIF(month, year) {
   if (year > 2024) return true
   if (year === 2024 && month >= 12) return true
@@ -76,29 +78,48 @@ export async function POST(req) {
     const pension = parseFloat(b.pension_provident)||0
     const mi = parseFloat(b.hosp_mortgage_interest)||0
 
-    const grossPay = basic + house + car + other
+    // Step 1: Gross Pay
+    const grossPay = Math.round((basic + house + car + other) * 100) / 100
+
+    // Step 1: NSSF (flat KES 1,080 for gross >= 18,000)
     const nssfResult = calcNSSF(grossPay)
     const nssf = nssfResult.total
+
+    // Step 1: SHIF/NHIF and AHL
+    const shifApplies = usesSHIF(month, year)
+    const shif = shifApplies ? calcSHIF(grossPay) : 0
+    const nhif = shifApplies ? 0 : calcNHIF(grossPay)
+    const healthDeduction = shif || nhif
     const housingLevy = calcHousingLevy(grossPay)
 
-    // Date-based health insurance deduction
-    const shifApplies = usesSHIF(month, year)
-    const healthDeduction = shifApplies ? calcSHIF(grossPay) : calcNHIF(grossPay)
-    const shif = shifApplies ? healthDeduction : 0
-    const nhif = shifApplies ? 0 : healthDeduction
+    // Step 2: Taxable Income = Gross Pay - NSSF only (SHIF/AHL do NOT reduce taxable income)
+    const taxableIncome = Math.max(0, Math.round((grossPay - nssf) * 100) / 100)
 
-    const grossTaxable = grossPay + house
-    const netTaxable = Math.max(0, grossTaxable - nssf - pension - mi)
-    const payeGross = calcPAYE(netTaxable)
+    // Step 3: Gross Tax from KRA bands
+    const payeGross = calcGrossTax(taxableIncome)
+
+    // Step 4: Net Tax (PAYE) = Gross Tax - Personal Relief (KES 2,400)
     const personalRelief = 2400
-    const netTax = Math.max(0, payeGross - personalRelief)
-    const totalDeductions = nssf + netTax + healthDeduction + housingLevy + pension + mi
-    const netPay = grossPay - totalDeductions
+    const netTax = Math.max(0, Math.round((payeGross - personalRelief) * 100) / 100)
+
+    // Step 5: Total Deductions and Net Pay
+    const totalDeductions = Math.round((nssf + healthDeduction + housingLevy + netTax + pension + mi) * 100) / 100
+    const netPay = Math.round((grossPay - totalDeductions) * 100) / 100
 
     const periodStart = b.period_start || ''
     const periodEnd = b.period_end || ''
     const now = new Date().toISOString()
     const slipRef = 'GV-' + year + '-' + String(month).padStart(2,'0') + '-' + Math.random().toString(36).substring(2,7).toUpperCase()
+
+    // Leave entitlements (statutory: 25 annual, 10 sick)
+    const annualLeaveEntitlement = 25
+    const annualLeaveTaken = parseInt(b.annual_leave_taken) || 0
+    const annualLeaveBalance = annualLeaveEntitlement - annualLeaveTaken
+    const sickLeaveEntitlement = 10
+    const sickLeaveTaken = parseInt(b.sick_leave_taken) || 0
+    const sickLeaveBalance = sickLeaveEntitlement - sickLeaveTaken
+    const leaveFrom = b.leave_from || ''
+    const leaveTo = b.leave_to || ''
 
     const result = db().prepare(`INSERT INTO payroll_payslips
        (employee_id, period_month, period_year, period_start, period_end,
@@ -107,16 +128,19 @@ export async function POST(req) {
         pension_provident, hosp_mortgage_interest,
         gross_taxable, net_taxable, paye, personal_relief, net_tax, nhif,
         total_deductions, net_pay,
-        leave_balance_days, leave_from, leave_to, leave_days_taken,
+        annual_leave_entitlement, annual_leave_taken, annual_leave_balance,
+        sick_leave_entitlement, sick_leave_taken, sick_leave_balance,
+        leave_from, leave_to,
         notes, slip_ref, generated_by, created_at)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(b.employee_id, month, year, periodStart, periodEnd,
            basic, house, car, other,
            grossPay, nssf, nssfResult.tierI, nssfResult.tierII, shif, housingLevy,
-           pension, mi, grossTaxable, netTaxable, payeGross, personalRelief,
+           pension, mi, taxableIncome, taxableIncome, payeGross, personalRelief,
            netTax, nhif, totalDeductions, netPay,
-           parseInt(b.leave_balance_days)||0, b.leave_from||'',
-           b.leave_to||'', parseInt(b.leave_days_taken)||0, b.notes||'', slipRef,
+           annualLeaveEntitlement, annualLeaveTaken, annualLeaveBalance,
+           sickLeaveEntitlement, sickLeaveTaken, sickLeaveBalance,
+           leaveFrom, leaveTo, b.notes||'', slipRef,
            user.name||user.email, now)
 
     const slip = db().prepare(`SELECT p.*, e.name as emp_name, e.email as emp_email, e.department as emp_department,
@@ -167,4 +191,3 @@ export async function DELETE(req) {
     return NextResponse.json({ ok: true })
   } catch(e) { return NextResponse.json({ ok: false, msg: e.message }, { status: 500 }) }
 }
-
