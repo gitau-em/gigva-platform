@@ -11,7 +11,7 @@ import Link              from 'next/link'
 export const metadata = {
   title: 'Gigva | Leading SaaS Platform in Kenya for Business Automation',
   description:
-    'Gigva is a leading SaaS platform in Kenya offering AI-powered analytics, M-Pesa reconciliation, payroll, and marketplace solutions for businesses in Nairobi and across Kenya.',
+    'Gigva is a leading SaaS platform in Kenya offering AI-powered analytics, M-Pesa automation, reconciliation, and marketplace solutions for businesses in Nairobi and across Kenya.',
   keywords: [
     'SaaS platform Kenya',
     'business software Kenya',
@@ -34,7 +34,7 @@ export default function HomePage() {
       <PricingSnippet />
       <CtaBanner />
 
-      {/* Internal link to Kenya SaaS landing page — boosts topical authority */}
+      {/* Internal link to Kenya SaaS landing page â boosts topical authority */}
       <section className="bg-sky-50 border-t border-sky-100 py-10 px-5 text-center">
         <p className="text-slate-600 text-sm mb-3">
           Looking for the best SaaS platform in Kenya?
