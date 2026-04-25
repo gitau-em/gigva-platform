@@ -21,7 +21,7 @@ const SME_FEATURES = [
   {
     icon: BarChart3,
     title: 'Revenue & Cash Flow Dashboard',
-    desc: 'See monthly revenue vs expenses, outstanding receivables, and cash flow projections. Know exactly whether you can cover payroll next month — before it's a problem.',
+    desc: 'See monthly revenue vs expenses, outstanding receivables, and cash flow projections. Know exactly whether you can cover payroll next month — before it\u2019s a problem.',
   },
   {
     icon: Users,
