@@ -82,107 +82,135 @@ function PayslipDocument({ slip, emp }) {
   if (!slip || !emp) return null
   const monthName = MONTHS[(slip.period_month || 1) - 1]
   const shifApplies = usesSHIF(slip.period_month, slip.period_year)
-  const healthCode = shifApplies ? 'SHIF' : 'NHIF'
-  const healthLabel = shifApplies ? 'Social Health Insurance Fund (SHIF) 2.75%' : 'National Hospital Insurance Fund (NHIF)'
-  const healthAmount = shifApplies ? (slip.shif || 0) : (slip.nhif || 0)
-  const td = { padding: '5px 8px', border: '1px solid #d0d8e8', fontSize: '12px' }
-  const hd = { padding: '6px 8px', border: '1px solid #4a7ae8', backgroundColor: '#1a56db', color: '#fff', fontSize: '12px', fontWeight: 'bold' }
+  const healthCode   = shifApplies ? 'SHIF'  : 'NHIF'
+  const healthLabel  = shifApplies ? 'Social Health Insurance Fund (SHIF) 2.75%' : 'National Hospital Insurance Fund (NHIF)'
+  const healthAmt    = shifApplies ? (slip.shif || 0) : (slip.nhif || 0)
 
   const earningsRows = [
-    { code: 'BASIC_PAY',   name: 'Basic Pay',          amount: slip.basic_pay || 0,       bold: false },
-    { code: 'HOUSE_ALLOW', name: 'Housing Allowance',   amount: slip.house_allowance || 0,  bold: false },
-    { code: 'CAR_BENEFIT', name: 'Car Benefit',         amount: slip.car_benefit || 0,      bold: false },
-    { code: 'OTHER_ALLOW', name: 'Other Allowances',    amount: slip.other_allowances || 0, bold: false },
-    { code: 'GROSS_PAY',   name: 'Gross Pay',           amount: slip.gross_pay || 0,        bold: true },
+    { code: 'BASIC_PAY',   name: 'Basic Pay',          amount: slip.basic_pay || 0         },
+    { code: 'HOUSE_ALLOW', name: 'Housing Allowance',   amount: slip.house_allowance || 0   },
+    { code: 'CAR_BENEFIT', name: 'Car Benefit',         amount: slip.car_benefit || 0       },
+    { code: 'OTHER_ALLOW', name: 'Other Allowances',    amount: slip.other_allowances || 0  },
+    { code: 'GROSS_PAY',   name: 'Gross Pay',           amount: slip.gross_pay || 0, bold: true },
   ]
 
   const deductionsRows = [
-    { code: 'NSSF_T1',    name: 'NSSF Tier I (6% of first KES 6,000)',  amount: slip.nssf_tier1 || 0,      bold: false },
-    { code: 'NSSF_T2',    name: 'NSSF Tier II (6% of next KES 12,000)', amount: slip.nssf_tier2 || 0,      bold: false },
-    { code: healthCode,   name: healthLabel,                              amount: healthAmount,               bold: false },
-    { code: 'AHL',        name: 'Affordable Housing Levy (1.5%)',        amount: slip.housing_levy || 0,    bold: false },
-    { code: 'PAYE',       name: 'Pay As You Earn (PAYE)',                amount: slip.paye || 0,            bold: false },
-    { code: 'PER_RELIEF', name: 'Personal Tax Relief (Credit)',          amount: slip.personal_relief || 0, bold: false },
-    { code: 'NET_TAX',    name: 'Net Tax Payable',                       amount: slip.net_tax || 0,         bold: true },
-  ].filter(r => r.amount > 0)
+    { code: 'NSSF_T1',    name: 'NSSF Tier I (6% of first KES 6,000)',  amount: slip.nssf_tier1 || 0,         bold: false },
+    { code: 'NSSF_T2',    name: 'NSSF Tier II (6% of next KES 12,000)', amount: slip.nssf_tier2 || 0,         bold: false },
+    { code: healthCode,   name: healthLabel,                              amount: healthAmt,                    bold: false },
+    { code: 'AHL',        name: 'Affordable Housing Levy (1.5%)',        amount: slip.housing_levy || 0,       bold: false },
+    { code: 'PAYE',       name: 'Pay As You Earn (PAYE)',                amount: slip.paye || 0,               bold: false },
+    { code: 'PER_RELIEF', name: 'Personal Tax Relief (Credit)',          amount: slip.personal_relief || 2400, bold: false },
+    { code: 'NET_TAX',    name: 'Net Tax Payable',                       amount: slip.net_tax || 0,            bold: true  },
+  ]
+
+  const periodStart = slip.leave_from || ''
+  const periodEnd   = slip.leave_to   || ''
 
   return (
-    <div id="payslip-print-area" style={{ fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '12px', color: '#111827', maxWidth: '800px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #e5e7eb' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: '720px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #d1d5db' }}>
 
-      {/* Blue header bar */}
-      <div style={{ backgroundColor: '#1a56db', padding: '12px 20px 8px', textAlign: 'center' }}>
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff', letterSpacing: '1px' }}>GIGVA KENYA</div>
-        <div style={{ fontSize: '9px', color: '#93c5fd', marginTop: '2px' }}>Westlands Business Park, Nairobi, Kenya &nbsp;|&nbsp; +254 701 443 444 &nbsp;|&nbsp; hello@gigva.co.ke</div>
-      </div>
-
-      {/* Title */}
-      <div style={{ textAlign: 'center', padding: '10px 20px 4px' }}>
-        <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#1a56db' }}>PAYSLIP</div>
-        <div style={{ fontSize: '10px', color: '#6b7280', marginTop: '2px' }}>Salary Slip of {emp.name} for {monthName} {slip.period_year}</div>
-      </div>
-
-      {/* Employee Details */}
-      <div style={{ margin: '8px 20px 0' }}>
-        <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold' }}>Employee Details</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', backgroundColor: '#f0f5ff', border: '1px solid #dbeafe', borderTop: 'none', padding: '8px' }}>
-          {[
-            ['NAME', emp.name], ['DEPT', emp.department || '-'], ['REF', slip.slip_ref || '-'],
-            ['EMAIL', emp.email], ['DESIGNATION', emp.designation || '-'], ['PERIOD', monthName + ' ' + slip.period_year],
-            ['BANK ACC', emp.bank_account || '-'], ['BANK NAME', emp.bank_name || '-'], ['STATUS', emp.marital_status || 'Single'],
-          ].map(([label, val]) => (
-            <div key={label} style={{ fontSize: '10px' }}>
-              <span style={{ fontWeight: 'bold', color: '#1a56db' }}>{label}:</span>{' '}
-              <span style={{ color: '#111827' }}>{val}</span>
-            </div>
-          ))}
+      {/* HEADER */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '14px 18px 10px', borderBottom: '2px solid #e5e7eb' }}>
+        <div style={{ fontSize: '11px', color: '#374151', lineHeight: '1.7' }}>
+          <div style={{ fontWeight: 'bold', fontSize: '12px' }}>Westlands Business Park, Nairobi</div>
+          <div>P.O Box 00100, Kenya</div>
+          <div>+254 701 443 444</div>
+          <div>hello@gigva.co.ke</div>
+          <div>www.gigva.co.ke</div>
+        </div>
+        <div style={{ textAlign: 'center', paddingTop: '4px' }}>
+          <div style={{ display: 'inline-block', backgroundColor: '#1a56db', color: '#fff', fontWeight: 'bold', fontSize: '16px', padding: '6px 28px', borderRadius: '4px' }}>Payslip</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '38px', height: '38px', backgroundColor: '#0ea5e9', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><path d="M22 20h-6v3.5a6 6 0 1 0 6-6v0" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><circle cx="26" cy="11" r="2.5" fill="#fff"/></svg>
+          </div>
+          <div>
+            <div style={{ fontWeight: 'bold', fontSize: '15px', color: '#0ea5e9', letterSpacing: '1px', lineHeight: '1.2' }}>GIGVA</div>
+            <div style={{ fontSize: '9px', color: '#64748b', letterSpacing: '3px' }}>KENYA</div>
+          </div>
         </div>
       </div>
 
-      {/* Leave Summary */}
-      <div style={{ margin: '8px 20px 0' }}>
-        <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold' }}>Leave Summary</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', backgroundColor: '#f0f5ff', border: '1px solid #dbeafe', borderTop: 'none', padding: '8px' }}>
-          {[
-            ['Annual Entitlement', (slip.annual_leave_entitlement || 25) + ' days'],
-            ['Annual Taken',       (slip.annual_leave_taken || 0) + ' days'],
-            ['Annual Balance',     (slip.annual_leave_balance !== undefined ? slip.annual_leave_balance : ((slip.annual_leave_entitlement || 25) - (slip.annual_leave_taken || 0))) + ' days'],
-            ['Sick Entitlement',   (slip.sick_leave_entitlement || 10) + ' days'],
-            ['Sick Taken',         (slip.sick_leave_taken || 0) + ' days'],
-            ['Sick Balance',       (slip.sick_leave_balance !== undefined ? slip.sick_leave_balance : ((slip.sick_leave_entitlement || 10) - (slip.sick_leave_taken || 0))) + ' days'],
-          ].map(([label, val]) => (
-            <div key={label} style={{ fontSize: '10px' }}>
-              <span style={{ fontWeight: 'bold', color: '#1a56db' }}>{label}:</span>{' '}
-              <span style={{ color: '#111827' }}>{val}</span>
-            </div>
-          ))}
-        </div>
+      {/* SALARY SLIP TITLE */}
+      <div style={{ backgroundColor: '#1a56db', color: '#fff', textAlign: 'center', padding: '7px 10px', fontWeight: 'bold', fontSize: '13px' }}>
+        Salary Slip of {emp.name} for {monthName}&#8211;{slip.period_year}
       </div>
 
-      {/* Earnings + Deductions */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', margin: '10px 20px 0' }}>
+      {/* PERSONAL DETAILS */}
+      <div style={{ margin: '10px 10px 0' }}>
+        <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}>Personal Details</div>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: '4px 8px', width: '33%', border: '1px solid #d1d5db' }}><strong>EMP NAME:</strong> {emp.name}</td>
+              <td style={{ padding: '4px 8px', width: '33%', border: '1px solid #d1d5db' }}><strong>DEPT:</strong> {emp.department || '—'}</td>
+              <td style={{ padding: '4px 8px', width: '34%', border: '1px solid #d1d5db' }}><strong>REF:</strong> {slip.ref_code || emp.employee_id || '—'}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>ADDRESS:</strong> {emp.address || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>DESIGNATION:</strong> {emp.designation || emp.role || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>PERIOD START:</strong> {periodStart}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>PHONE:</strong> {emp.phone || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>ID NO:</strong> {emp.id_number || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>PERIOD END:</strong> {periodEnd}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>EMAIL:</strong> {emp.email || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>DATE EMPLOYED:</strong> {emp.date_employed || emp.hire_date || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>BANK ACCOUNT:</strong> {emp.bank_account || '—'}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>MARITAL STATUS:</strong> {emp.marital_status || '—'}</td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}></td>
+              <td style={{ padding: '4px 8px', border: '1px solid #d1d5db' }}><strong>BANK NAME:</strong> {emp.bank_name || '—'}{emp.bank_code ? ' | CODE: ' + emp.bank_code : ''}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* EARNINGS & DEDUCTIONS */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', margin: '10px 10px 0' }}>
         <div>
-          <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold' }}>Earnings</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+          <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}>Earnings</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+            <thead>
+              <tr>
+                <th style={{ padding: '4px 6px', backgroundColor: '#1a56db', color: '#fff', textAlign: 'left', border: '1px solid #4a7ae8' }}>Code</th>
+                <th style={{ padding: '4px 6px', backgroundColor: '#1a56db', color: '#fff', textAlign: 'left', border: '1px solid #4a7ae8' }}>Description</th>
+                <th style={{ padding: '4px 6px', backgroundColor: '#1a56db', color: '#fff', textAlign: 'right', border: '1px solid #4a7ae8' }}>Amount (KES)</th>
+              </tr>
+            </thead>
             <tbody>
               {earningsRows.map((row, i) => (
                 <tr key={row.code} style={{ backgroundColor: i % 2 === 0 ? '#f0f5ff' : '#fff' }}>
-                  <td style={{ padding: '3px 6px', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', width: '30%' }}>{row.code}</td>
-                  <td style={{ padding: '3px 6px', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.name}</td>
-                  <td style={{ padding: '3px 6px', textAlign: 'right', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>KES {fmtKsh(row.amount)}</td>
+                  <td style={{ padding: '3px 6px', border: '1px solid #d0d8e8', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.code}</td>
+                  <td style={{ padding: '3px 6px', border: '1px solid #d0d8e8', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.name}</td>
+                  <td style={{ padding: '3px 6px', border: '1px solid #d0d8e8', textAlign: 'right', color: row.bold ? '#1a56db' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>{fmtKsh(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         <div>
-          <div style={{ backgroundColor: '#b91c1c', color: '#fff', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold' }}>Deductions</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+          <div style={{ backgroundColor: '#9b1c1c', color: '#fff', padding: '4px 8px', fontSize: '11px', fontWeight: 'bold' }}>Deductions</div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+            <thead>
+              <tr>
+                <th style={{ padding: '4px 6px', backgroundColor: '#9b1c1c', color: '#fff', textAlign: 'left', border: '1px solid #c53030' }}>Code</th>
+                <th style={{ padding: '4px 6px', backgroundColor: '#9b1c1c', color: '#fff', textAlign: 'left', border: '1px solid #c53030' }}>Description</th>
+                <th style={{ padding: '4px 6px', backgroundColor: '#9b1c1c', color: '#fff', textAlign: 'right', border: '1px solid #c53030' }}>Amount (KES)</th>
+              </tr>
+            </thead>
             <tbody>
               {deductionsRows.map((row, i) => (
                 <tr key={row.code} style={{ backgroundColor: i % 2 === 0 ? '#fff5f5' : '#fff' }}>
-                  <td style={{ padding: '3px 6px', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', width: '28%' }}>{row.code}</td>
-                  <td style={{ padding: '3px 6px', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.name}</td>
-                  <td style={{ padding: '3px 6px', textAlign: 'right', color: row.bold ? '#b91c1c' : '#dc2626', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>KES {fmtKsh(row.amount)}</td>
+                  <td style={{ padding: '3px 6px', border: '1px solid #fca5a5', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.code}</td>
+                  <td style={{ padding: '3px 6px', border: '1px solid #fca5a5', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal' }}>{row.name}</td>
+                  <td style={{ padding: '3px 6px', border: '1px solid #fca5a5', textAlign: 'right', color: row.bold ? '#b91c1c' : '#374151', fontWeight: row.bold ? 'bold' : 'normal', whiteSpace: 'nowrap' }}>{fmtKsh(row.amount)}</td>
                 </tr>
               ))}
             </tbody>
@@ -190,32 +218,44 @@ function PayslipDocument({ slip, emp }) {
         </div>
       </div>
 
-      {/* Net Pay bar */}
-      <div style={{ backgroundColor: '#1a56db', margin: '10px 20px 0', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-        <div style={{ fontSize: '10px', color: '#fff' }}>
-          <span style={{ fontWeight: 'bold' }}>GROSS PAY</span>&nbsp;
-          <span style={{ color: '#e0f2fe' }}>KES {fmtKsh(slip.gross_pay)}</span>
+      {/* NET PAY BAR */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', margin: '10px 10px 0', border: '1px solid #1a56db' }}>
+        <div style={{ backgroundColor: '#1a56db', color: '#fff', padding: '8px 12px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 'bold' }}>GROSS PAY</div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>KES {fmtKsh(slip.gross_pay || 0)}</div>
         </div>
-        <div style={{ fontSize: '10px', color: '#fff' }}>
-          <span style={{ fontWeight: 'bold' }}>DEDUCTIONS</span>&nbsp;
-          <span style={{ color: '#fca5a5' }}>KES {fmtKsh(slip.total_deductions || (slip.gross_pay - slip.net_pay))}</span>
+        <div style={{ backgroundColor: '#1e3a8a', color: '#fff', padding: '8px 12px', borderLeft: '1px solid #3b82f6', borderRight: '1px solid #3b82f6' }}>
+          <div style={{ fontSize: '10px', fontWeight: 'bold' }}>TOTAL DEDUCTIONS</div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>KES {fmtKsh(slip.total_deductions || 0)}</div>
         </div>
-        <div style={{ fontSize: '13px', color: '#fbbf24', fontWeight: 'bold' }}>
-          NET PAY: KES {fmtKsh(slip.net_pay)}
+        <div style={{ backgroundColor: '#1e3a8a', color: '#fbbf24', padding: '8px 12px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#fff' }}>NET PAY</div>
+          <div style={{ fontSize: '13px', fontWeight: 'bold' }}>KES {fmtKsh(slip.net_pay || 0)}</div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{ margin: '10px 20px 16px', borderTop: '1px solid #d1d5db', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#6b7280' }}>
-        <span>Prepared By: GIGVA HR &nbsp;|&nbsp; System-generated payslip</span>
-        <span>Gigva Kenya &nbsp;|&nbsp; +254 701 443 444 &nbsp;|&nbsp; hello@gigva.co.ke</span>
+      {/* FOOTER */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', margin: '16px 10px 10px', paddingTop: '4px' }}>
+        <div>
+          <div style={{ fontSize: '11px', fontWeight: 'bold', marginBottom: '6px' }}>Prepared By: FATUMA KAMAU</div>
+          <img src="/gigva-stamp.png" alt="Gigva Kenya Stamp" style={{ width: '90px', height: '90px', opacity: 0.85 }} />
+        </div>
+        <div style={{ fontSize: '11px', color: '#374151', textAlign: 'right', paddingBottom: '10px' }}>
+          Authorized Signature:&nbsp;
+          <span style={{ display: 'inline-block', borderBottom: '1px solid #374151', width: '160px', marginLeft: '4px' }}>&nbsp;</span>
+        </div>
+      </div>
+
+      {/* BOTTOM CONTACT BAR */}
+      <div style={{ borderTop: '1px solid #e5e7eb', textAlign: 'center', padding: '6px 10px', fontSize: '10px', color: '#6b7280' }}>
+        Gigva Kenya &nbsp;&bull;&nbsp; +254 701 443 444 &nbsp;&bull;&nbsp; hello@gigva.co.ke &nbsp;&bull;&nbsp; www.gigva.co.ke
       </div>
 
     </div>
   )
 }
 
-export default function PayrollPage() {
+ default function PayrollPage() {
   const router = useRouter()
   const [token, setToken] = useState(null)
   const [user, setUser] = useState(null)
