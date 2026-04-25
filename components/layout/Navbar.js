@@ -2,14 +2,13 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Home, Package, Zap, DollarSign, Info, Shield, Calendar, Mail, ArrowRight, LogIn, Lock, Users } from 'lucide-react'
+import { Menu, X, Home, Package, Zap, Info, Shield, Calendar, Mail, ArrowRight, LogIn, Lock, Users } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/',           label: 'Home',        icon: Home     },
   { href: '/product',    label: 'Product',     icon: Package  },
   { href: '/features',   label: 'Features',    icon: Zap      },
-  { href: '/for',        label: 'Who It\u2019s For', icon: Users    },
-  { href: '/pricing',    label: 'Pricing',     icon: DollarSign },
+  { href: '/for',        label: 'Who It’s For', icon: Users    },
   { href: '/about',      label: 'About Us',    icon: Info     },
   { href: '/security',   label: 'Security',    icon: Shield   },
   { href: '/book-demo',  label: 'Book a Demo', icon: Calendar },
