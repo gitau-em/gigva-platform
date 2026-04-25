@@ -1,4 +1,4 @@
-'use client'
+'use client' // KRA payroll engine v2
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
