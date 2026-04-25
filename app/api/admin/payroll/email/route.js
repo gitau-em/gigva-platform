@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { verifyToken } from '@/lib/auth'
 import { db } from '@/lib/db'
-import PDFDocument from 'pdfkit'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -61,11 +61,22 @@ function ensureInboxSchema(database) {
   `)
 }
 
-// Generate PDF payslip buffer
+// Helper: draw a filled rectangle
+function drawRect(page, x, y, w, h, colorHex) {
+  const c = hexToRgb(colorHex)
+  page.drawRectangle({ x, y, width: w, height: h, color: rgb(c.r, c.g, c.b) })
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.replace('#',''), 16)
+  return { r: ((n>>16)&255)/255, g: ((n>>8)&255)/255, b: (n&255)/255 }
+}
+
+// Generate PDF payslip buffer using pdf-lib (pure JS, no filesystem fonts)
 async function buildPayslipPdf(slip, emp) {
   const monthName = MONTHS[(slip.period_month||1)-1]
   const shifApplies = usesSHIF(slip.period_month, slip.period_year)
-  const healthLabel = shifApplies ? 'Social Health Insurance Fund (SHIF 2.75%)' : 'National Hospital Insurance Fund (NHIF)'
+  const healthLabel = shifApplies ? 'SHIF (2.75%)' : 'NHIF'
   const healthCode  = shifApplies ? 'SHIF' : 'NHIF'
   const healthAmount = shifApplies ? (slip.shif || 0) : (slip.nhif || 0)
 
@@ -76,153 +87,187 @@ async function buildPayslipPdf(slip, emp) {
   const sickTaken         = slip.sick_leave_taken || 0
   const sickBalance       = slip.sick_leave_balance !== undefined ? slip.sick_leave_balance : (sickEntitlement - sickTaken)
 
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 40, size: 'A4' })
-    const chunks = []
-    doc.on('data', chunk => chunks.push(chunk))
-    doc.on('end', () => resolve(Buffer.concat(chunks)))
-    doc.on('error', reject)
+  const pdfDoc = await PDFDocument.create()
+  const helvetica     = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
 
-    const BLUE    = '#1a56db'
-    const RED     = '#b91c1c'
-    const GRAY    = '#6b7280'
-    const BLACK   = '#111827'
-    const pageW   = doc.page.width - 80
+  // A4 page: 595.28 x 841.89 pt. pdf-lib origin is bottom-left.
+  const pageW_pt = 595.28
+  const pageH_pt = 841.89
+  const page = pdfDoc.addPage([pageW_pt, pageH_pt])
 
-    // Header
-    doc.rect(40, 40, pageW, 50).fill(BLUE)
-    doc.fontSize(20).fillColor('#ffffff').font('Helvetica-Bold')
-      .text('GIGVA KENYA', 40, 52, { width: pageW, align: 'center' })
-    doc.fontSize(9).fillColor('#93c5fd').font('Helvetica')
-      .text('Westlands Business Park, Nairobi, Kenya  |  +254 701 443 444  |  hello@gigva.co.ke', 40, 75, { width: pageW, align: 'center' })
+  const margin = 40
+  const contentW = pageW_pt - margin * 2
 
-    doc.y = 105
+  // pdf-lib uses bottom-left origin: y = pageH - top_offset
+  function topY(topOffset) { return pageH_pt - topOffset }
 
-    // Title
-    doc.fontSize(14).fillColor(BLUE).font('Helvetica-Bold')
-      .text('PAYSLIP', 40, doc.y, { width: pageW, align: 'center' })
-    doc.fontSize(10).fillColor(GRAY).font('Helvetica')
-      .text('Salary Slip of ' + emp.name + ' for ' + monthName + ' ' + slip.period_year, 40, doc.y + 2, { width: pageW, align: 'center' })
+  // ── BLUE HEADER ──
+  const headerTop = 40
+  const headerH   = 55
+  drawRect(page, margin, topY(headerTop + headerH), contentW, headerH, '#1a56db')
 
-    doc.moveDown(1)
-    const y0 = doc.y
-
-    // Employee Details
-    doc.rect(40, y0, pageW, 16).fill(BLUE)
-    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold')
-      .text('Employee Details', 45, y0 + 4)
-
-    const col3 = pageW / 3
-    const detY = y0 + 20
-
-    function cell(label, value, x, y) {
-      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(BLUE).text(label + ':', x, y, { width: 55 })
-      doc.fontSize(7.5).font('Helvetica').fillColor(BLACK).text(value || '-', x + 57, y, { width: col3 - 62 })
-    }
-
-    cell('NAME', emp.name, 40, detY)
-    cell('DEPT', emp.department, 40 + col3, detY)
-    cell('REF', slip.slip_ref, 40 + col3*2, detY)
-    cell('EMAIL', emp.email, 40, detY + 14)
-    cell('DESIGNATION', emp.designation, 40 + col3, detY + 14)
-    cell('PERIOD', monthName + ' ' + slip.period_year, 40 + col3*2, detY + 14)
-    cell('BANK ACC', emp.bank_account, 40, detY + 28)
-    cell('BANK NAME', emp.bank_name, 40 + col3, detY + 28)
-    cell('STATUS', emp.marital_status || 'Single', 40 + col3*2, detY + 28)
-
-    doc.y = detY + 44
-
-    // Leave Summary
-    const leaveY = doc.y
-    doc.rect(40, leaveY, pageW, 14).fill(BLUE)
-    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('Leave Summary', 45, leaveY + 3)
-
-    const col6 = pageW / 3
-    function leaveCell(label, val, x, y) {
-      doc.fontSize(7.5).font('Helvetica-Bold').fillColor(BLUE).text(label + ':', x, y, { width: 80 })
-      doc.fontSize(7.5).font('Helvetica').fillColor(BLACK).text(String(val), x + 82, y, { width: col6 - 87 })
-    }
-
-    leaveCell('Annual Entitlement', annualEntitlement + ' days', 40, leaveY + 18)
-    leaveCell('Annual Taken', annualTaken + ' days', 40 + col6, leaveY + 18)
-    leaveCell('Annual Balance', annualBalance + ' days', 40 + col6*2, leaveY + 18)
-    leaveCell('Sick Entitlement', sickEntitlement + ' days', 40, leaveY + 32)
-    leaveCell('Sick Taken', sickTaken + ' days', 40 + col6, leaveY + 32)
-    leaveCell('Sick Balance', sickBalance + ' days', 40 + col6*2, leaveY + 32)
-
-    doc.y = leaveY + 48
-
-    // Earnings & Deductions
-    const tableY = doc.y
-    const halfW  = (pageW - 10) / 2
-
-    // Earnings header
-    doc.rect(40, tableY, halfW, 14).fill(BLUE)
-    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('Earnings', 45, tableY + 3)
-
-    const earnings = [
-      { code: 'BASIC_PAY',   name: 'Basic Pay',         amount: slip.basic_pay || 0, bold: false },
-      { code: 'HOUSE_ALLOW', name: 'Housing Allowance',  amount: slip.house_allowance || 0, bold: false },
-      { code: 'CAR_BENEFIT', name: 'Car Benefit',        amount: slip.car_benefit || 0, bold: false },
-      { code: 'OTHER_ALLOW', name: 'Other Allowances',   amount: slip.other_allowances || 0, bold: false },
-      { code: 'GROSS_PAY',   name: 'Gross Pay',          amount: slip.gross_pay || 0, bold: true },
-    ]
-
-    let ey = tableY + 18
-    earnings.forEach((item, i) => {
-      if (i % 2 === 0) doc.rect(40, ey, halfW, 13).fill('#f0f5ff')
-      doc.fontSize(7.5).font(item.bold ? 'Helvetica-Bold' : 'Helvetica').fillColor(item.bold ? BLUE : BLACK)
-        .text(item.code, 43, ey + 3, { width: 55 })
-        .text(item.name, 100, ey + 3, { width: halfW - 120 })
-        .text('KES ' + fmt(item.amount), 40 + halfW - 78, ey + 3, { width: 74, align: 'right' })
-      ey += 13
-    })
-
-    // Deductions header
-    const dx = 40 + halfW + 10
-    doc.rect(dx, tableY, halfW, 14).fill(RED)
-    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('Deductions', dx + 5, tableY + 3)
-
-    const deductions = [
-      { code: 'NSSF_T1', name: 'NSSF Tier I (6% x KES 6,000)',  amount: slip.nssf_tier1 || 0, bold: false },
-      { code: 'NSSF_T2', name: 'NSSF Tier II (6% x KES 12,000)',amount: slip.nssf_tier2 || 0, bold: false },
-      { code: healthCode, name: healthLabel,                       amount: healthAmount, bold: false },
-      { code: 'AHL',     name: 'Affordable Housing Levy (1.5%)',  amount: slip.housing_levy || 0, bold: false },
-      { code: 'PAYE',    name: 'Pay As You Earn (PAYE)',          amount: slip.paye || 0, bold: false },
-      { code: 'RELIEF',  name: 'Personal Tax Relief',             amount: slip.personal_relief || 0, bold: false },
-      { code: 'NET_TAX', name: 'Net Tax Payable',                 amount: slip.net_tax || 0, bold: true },
-    ].filter(r => r.amount > 0)
-
-    let dy2 = tableY + 18
-    deductions.forEach((item, i) => {
-      if (i % 2 === 0) doc.rect(dx, dy2, halfW, 13).fill('#fff5f5')
-      doc.fontSize(7.5).font(item.bold ? 'Helvetica-Bold' : 'Helvetica').fillColor(item.bold ? RED : BLACK)
-        .text(item.code, dx + 3, dy2 + 3, { width: 48 })
-        .text(item.name, dx + 52, dy2 + 3, { width: halfW - 125 })
-        .text('KES ' + fmt(item.amount), dx + halfW - 78, dy2 + 3, { width: 74, align: 'right' })
-      dy2 += 13
-    })
-
-    const summaryY = Math.max(ey, dy2) + 8
-
-    // Net Pay bar
-    doc.rect(40, summaryY, pageW, 22).fill(BLUE)
-    const s = summaryY + 6
-    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('GROSS PAY', 45, s, { width: 75 })
-    doc.fontSize(9).fillColor('#e0f2fe').font('Helvetica').text('KES ' + fmt(slip.gross_pay), 120, s, { width: pageW/3 - 80 })
-    doc.fontSize(9).fillColor('#ffffff').font('Helvetica-Bold').text('DEDUCTIONS', 40 + pageW/3, s, { width: 80 })
-    doc.fontSize(9).fillColor('#fca5a5').font('Helvetica').text('KES ' + fmt(slip.total_deductions||(slip.gross_pay-slip.net_pay)), 40 + pageW/3 + 82, s, { width: pageW/3 - 82 })
-    doc.fontSize(10).fillColor('#fbbf24').font('Helvetica-Bold').text('NET PAY: KES ' + fmt(slip.net_pay), 40 + pageW*0.67, s - 1, { width: pageW * 0.31, align: 'right' })
-
-    // Footer
-    const footerY = summaryY + 30
-    doc.moveTo(40, footerY).lineTo(40 + pageW, footerY).strokeColor('#d1d5db').lineWidth(0.5).stroke()
-    doc.fontSize(8).fillColor(GRAY).font('Helvetica')
-      .text('Prepared By: GIGVA HR  |  System-generated payslip', 40, footerY + 8, { width: pageW/2 })
-      .text('Gigva Kenya | +254 701 443 444 | hello@gigva.co.ke', 40 + pageW/2, footerY + 8, { width: pageW/2, align: 'right' })
-
-    doc.end()
+  page.drawText('GIGVA KENYA', {
+    x: margin + contentW / 2 - helveticaBold.widthOfTextAtSize('GIGVA KENYA', 20) / 2,
+    y: topY(headerTop + 26),
+    font: helveticaBold, size: 20, color: rgb(1,1,1)
   })
+  const subLine = 'Westlands Business Park, Nairobi | +254 701 443 444 | hello@gigva.co.ke'
+  page.drawText(subLine, {
+    x: margin + contentW / 2 - helvetica.widthOfTextAtSize(subLine, 8) / 2,
+    y: topY(headerTop + 46),
+    font: helvetica, size: 8, color: rgb(0.58,0.77,0.99)
+  })
+
+  // ── PAYSLIP TITLE ──
+  const titleTop = headerTop + headerH + 10
+  const titleText = 'PAYSLIP - ' + monthName + ' ' + slip.period_year
+  page.drawText(titleText, {
+    x: margin + contentW / 2 - helveticaBold.widthOfTextAtSize(titleText, 13) / 2,
+    y: topY(titleTop + 13),
+    font: helveticaBold, size: 13, color: hexToRgb('#1a56db') ? rgb(...Object.values(hexToRgb('#1a56db'))) : rgb(0.1,0.34,0.86)
+  })
+  const subTitle = 'Salary Slip of ' + emp.name + ' for ' + monthName + ' ' + slip.period_year
+  page.drawText(subTitle, {
+    x: margin + contentW / 2 - helvetica.widthOfTextAtSize(subTitle, 9) / 2,
+    y: topY(titleTop + 26),
+    font: helvetica, size: 9, color: rgb(0.42,0.45,0.50)
+  })
+
+  // ── EMPLOYEE DETAILS HEADER ──
+  const empSecTop = titleTop + 34
+  drawRect(page, margin, topY(empSecTop + 16), contentW, 16, '#1a56db')
+  page.drawText('Employee Details', {
+    x: margin + 5, y: topY(empSecTop + 13),
+    font: helveticaBold, size: 9, color: rgb(1,1,1)
+  })
+
+  const col3 = contentW / 3
+  const empDataTop = empSecTop + 20
+
+  function drawCell(label, value, cx, cy) {
+    const lbl = (label + ':')
+    page.drawText(lbl, { x: cx, y: topY(cy + 8), font: helveticaBold, size: 7.5, color: rgb(0.1,0.34,0.86) })
+    page.drawText((value || '-').toString().substring(0,28), { x: cx + 52, y: topY(cy + 8), font: helvetica, size: 7.5, color: rgb(0.07,0.09,0.15) })
+  }
+
+  drawCell('NAME',        emp.name,             margin,            empDataTop)
+  drawCell('DEPT',        emp.department,        margin + col3,     empDataTop)
+  drawCell('REF',         slip.slip_ref,         margin + col3 * 2, empDataTop)
+  drawCell('EMAIL',       emp.email,             margin,            empDataTop + 14)
+  drawCell('DESIGNATION', emp.designation,       margin + col3,     empDataTop + 14)
+  drawCell('PERIOD',      monthName + ' ' + slip.period_year, margin + col3 * 2, empDataTop + 14)
+  drawCell('BANK ACC',    emp.bank_account,      margin,            empDataTop + 28)
+  drawCell('BANK NAME',   emp.bank_name,         margin + col3,     empDataTop + 28)
+  drawCell('STATUS',      emp.marital_status || 'Single', margin + col3 * 2, empDataTop + 28)
+
+  // ── LEAVE SUMMARY ──
+  const leaveTop = empDataTop + 44
+  drawRect(page, margin, topY(leaveTop + 14), contentW, 14, '#1a56db')
+  page.drawText('Leave Summary', {
+    x: margin + 5, y: topY(leaveTop + 11),
+    font: helveticaBold, size: 9, color: rgb(1,1,1)
+  })
+
+  const leaveDataTop = leaveTop + 18
+  function drawLeaveCell(label, val, cx, cy) {
+    page.drawText((label + ':'), { x: cx, y: topY(cy + 8), font: helveticaBold, size: 7.5, color: rgb(0.1,0.34,0.86) })
+    page.drawText(String(val), { x: cx + 80, y: topY(cy + 8), font: helvetica, size: 7.5, color: rgb(0.07,0.09,0.15) })
+  }
+  const col6 = contentW / 3
+  drawLeaveCell('Annual Entitlement', annualEntitlement + ' days', margin,         leaveDataTop)
+  drawLeaveCell('Annual Taken',       annualTaken + ' days',       margin + col6,  leaveDataTop)
+  drawLeaveCell('Annual Balance',     annualBalance + ' days',     margin + col6*2,leaveDataTop)
+  drawLeaveCell('Sick Entitlement',   sickEntitlement + ' days',   margin,         leaveDataTop + 14)
+  drawLeaveCell('Sick Taken',         sickTaken + ' days',         margin + col6,  leaveDataTop + 14)
+  drawLeaveCell('Sick Balance',       sickBalance + ' days',       margin + col6*2,leaveDataTop + 14)
+
+  // ── EARNINGS & DEDUCTIONS ──
+  const tableTop = leaveDataTop + 30
+  const halfW    = (contentW - 10) / 2
+  const dx       = margin + halfW + 10
+
+  // Earnings header
+  drawRect(page, margin, topY(tableTop + 14), halfW, 14, '#1a56db')
+  page.drawText('Earnings', { x: margin + 5, y: topY(tableTop + 11), font: helveticaBold, size: 9, color: rgb(1,1,1) })
+
+  const earnings = [
+    { code: 'BASIC_PAY',   name: 'Basic Pay',         amount: slip.basic_pay || 0,        bold: false },
+    { code: 'HOUSE_ALLOW', name: 'Housing Allowance',  amount: slip.house_allowance || 0,  bold: false },
+    { code: 'CAR_BENEFIT', name: 'Car Benefit',        amount: slip.car_benefit || 0,       bold: false },
+    { code: 'OTHER_ALLOW', name: 'Other Allowances',   amount: slip.other_allowances || 0, bold: false },
+    { code: 'GROSS_PAY',   name: 'Gross Pay',          amount: slip.gross_pay || 0,        bold: true  },
+  ]
+
+  let ey = tableTop + 18
+  earnings.forEach((item, i) => {
+    if (i % 2 === 0) drawRect(page, margin, topY(ey + 13), halfW, 13, '#f0f5ff')
+    const font = item.bold ? helveticaBold : helvetica
+    const color = item.bold ? rgb(0.1,0.34,0.86) : rgb(0.07,0.09,0.15)
+    page.drawText(item.code, { x: margin + 3, y: topY(ey + 10), font, size: 7.5, color })
+    page.drawText(item.name.substring(0,22), { x: margin + 58, y: topY(ey + 10), font, size: 7.5, color })
+    const amtTxt = 'KES ' + fmt(item.amount)
+    page.drawText(amtTxt, {
+      x: margin + halfW - helvetica.widthOfTextAtSize(amtTxt, 7.5) - 4,
+      y: topY(ey + 10), font, size: 7.5, color
+    })
+    ey += 13
+  })
+
+  // Deductions header
+  drawRect(page, dx, topY(tableTop + 14), halfW, 14, '#b91c1c')
+  page.drawText('Deductions', { x: dx + 5, y: topY(tableTop + 11), font: helveticaBold, size: 9, color: rgb(1,1,1) })
+
+  const deductions = [
+    { code: 'NSSF_T1', name: 'NSSF Tier I',     amount: slip.nssf_tier1 || 0,    bold: false },
+    { code: 'NSSF_T2', name: 'NSSF Tier II',    amount: slip.nssf_tier2 || 0,    bold: false },
+    { code: healthCode, name: healthLabel,        amount: healthAmount,             bold: false },
+    { code: 'AHL',     name: 'Housing Levy',     amount: slip.housing_levy || 0,  bold: false },
+    { code: 'PAYE',    name: 'PAYE',             amount: slip.paye || 0,          bold: false },
+    { code: 'NET_TAX', name: 'Net Tax Payable',  amount: slip.net_tax || 0,       bold: true  },
+  ].filter(r => r.amount > 0)
+
+  let dy2 = tableTop + 18
+  deductions.forEach((item, i) => {
+    if (i % 2 === 0) drawRect(page, dx, topY(dy2 + 13), halfW, 13, '#fff5f5')
+    const font = item.bold ? helveticaBold : helvetica
+    const color = item.bold ? rgb(0.72,0.11,0.11) : rgb(0.07,0.09,0.15)
+    page.drawText(item.code, { x: dx + 3, y: topY(dy2 + 10), font, size: 7.5, color })
+    page.drawText(item.name.substring(0,22), { x: dx + 52, y: topY(dy2 + 10), font, size: 7.5, color })
+    const amtTxt = 'KES ' + fmt(item.amount)
+    page.drawText(amtTxt, {
+      x: dx + halfW - helvetica.widthOfTextAtSize(amtTxt, 7.5) - 4,
+      y: topY(dy2 + 10), font, size: 7.5, color
+    })
+    dy2 += 13
+  })
+
+  // ── NET PAY SUMMARY BAR ──
+  const summaryTop = Math.max(ey, dy2) + 10
+  drawRect(page, margin, topY(summaryTop + 24), contentW, 24, '#1a56db')
+
+  const grossTxt = 'Gross: KES ' + fmt(slip.gross_pay)
+  const dedTxt   = 'Deductions: KES ' + fmt(slip.total_deductions || (slip.gross_pay - slip.net_pay))
+  const netTxt   = 'NET PAY: KES ' + fmt(slip.net_pay)
+
+  page.drawText(grossTxt, { x: margin + 5, y: topY(summaryTop + 15), font: helveticaBold, size: 8, color: rgb(0.88,0.95,0.99) })
+  page.drawText(dedTxt,   { x: margin + contentW * 0.36, y: topY(summaryTop + 15), font: helveticaBold, size: 8, color: rgb(0.99,0.64,0.64) })
+  page.drawText(netTxt,   {
+    x: margin + contentW - helveticaBold.widthOfTextAtSize(netTxt, 10) - 5,
+    y: topY(summaryTop + 16), font: helveticaBold, size: 10, color: rgb(0.98,0.75,0.14)
+  })
+
+  // ── FOOTER ──
+  const footerTop = summaryTop + 34
+  page.drawLine({ start: { x: margin, y: topY(footerTop) }, end: { x: margin + contentW, y: topY(footerTop) }, thickness: 0.5, color: rgb(0.82,0.84,0.87) })
+  page.drawText('Prepared By: GIGVA HR  |  System-generated payslip', { x: margin, y: topY(footerTop + 12), font: helvetica, size: 8, color: rgb(0.42,0.45,0.50) })
+  page.drawText('Gigva Kenya | +254 701 443 444 | hello@gigva.co.ke', {
+    x: margin + contentW - helvetica.widthOfTextAtSize('Gigva Kenya | +254 701 443 444 | hello@gigva.co.ke', 8) - 2,
+    y: topY(footerTop + 12), font: helvetica, size: 8, color: rgb(0.42,0.45,0.50)
+  })
+
+  const pdfBytes = await pdfDoc.save()
+  return Buffer.from(pdfBytes)
 }
 
 function buildEmailBodyHtml(slip, employee, monthName, filename) {
@@ -236,13 +281,13 @@ function buildEmailBodyHtml(slip, employee, monthName, filename) {
     '<p>Dear ' + employee.name + ',</p>' +
     '<p>Please find your payslip for <strong>' + monthName + ' ' + slip.period_year + '</strong> attached as a PDF to this email.</p>' +
     '<table style="width:100%;border-collapse:collapse;background:#f0f5ff;border:2px solid #1a56db;margin:12px 0;">' +
-    '<tr><td colspan="2" style="padding:10px 14px;font-weight:bold;color:#fff;background:#1a56db;font-size:13px;">Payslip Summary &mdash; ' + monthName + ' ' + slip.period_year + '</td></tr>' +
+    '<tr><td colspan="2" style="padding:10px 14px;font-weight:bold;color:#fff;background:#1a56db;font-size:13px;">Payslip Summary - ' + monthName + ' ' + slip.period_year + '</td></tr>' +
     '<tr><td style="padding:6px 14px;">Gross Pay</td><td style="padding:6px 14px;font-weight:bold;text-align:right;">KES ' + fmtH(slip.gross_pay) + '</td></tr>' +
     '<tr style="background:#e8f0fe;"><td style="padding:6px 14px;">Total Deductions</td><td style="padding:6px 14px;font-weight:bold;text-align:right;color:#b91c1c;">KES ' + fmtH(total) + '</td></tr>' +
     '<tr style="background:#dbeafe;"><td style="padding:8px 14px;font-weight:bold;font-size:15px;">NET PAY</td><td style="padding:8px 14px;font-weight:bold;text-align:right;color:#1a56db;font-size:16px;">KES ' + fmtH(slip.net_pay) + '</td></tr>' +
     '</table>' +
     '<div style="background:#ecfdf5;border:2px solid #10b981;border-radius:6px;padding:12px 16px;margin:12px 0;">' +
-    '<p style="margin:0;font-size:14px;"><strong>&#128196; PDF Attachment:</strong> Your full payslip is attached as <strong>' + filename + '</strong>.</p>' +
+    '<p style="margin:0;font-size:14px;"><strong>PDF Attachment:</strong> Your full payslip is attached as <strong>' + filename + '</strong>.</p>' +
     '<p style="margin:6px 0 0;font-size:12px;color:#059669;">Open the attached PDF to view all earnings, deductions, and leave details. You can also download it from your inbox.</p>' +
     '</div>' +
     '<p style="font-size:12px;color:#666;">For questions contact HR: <a href="mailto:hello@gigva.co.ke">hello@gigva.co.ke</a></p>' +
@@ -261,7 +306,7 @@ export async function POST(req) {
     const monthName = MONTHS[(slip.period_month||1)-1]
     const filename  = 'Payslip_' + employee.name.replace(/\s+/g,'_') + '_' + monthName + '_' + slip.period_year + '.pdf'
 
-    // Generate PDF
+    // Generate PDF using pdf-lib (pure JS, no filesystem font files)
     const pdfBuffer = await buildPayslipPdf(slip, employee)
     const pdfBase64 = pdfBuffer.toString('base64')
 
