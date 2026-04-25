@@ -17,7 +17,7 @@ export default function Hero() {
       <div className="max-w-5xl mx-auto relative z-10">
         <div className="grid md:grid-cols-2 gap-10 items-center">
 
-          {/* Left — copy */}
+          {/* Left â copy */}
           <div>
             {/* Location trust badge */}
             <div className="inline-flex items-center gap-2 bg-sky-50 border border-sky-200 text-sky-700 text-xs font-semibold px-3 py-1.5 rounded-full mb-3">
@@ -31,18 +31,17 @@ export default function Hero() {
               Free for your first 30 days &mdash; no credit card
             </div>
 
-            {/* H1 — primary keyword target */}
+            {/* H1 â primary keyword target */}
             <h1 className="font-display font-bold text-4xl md:text-5xl text-slate-900 leading-[1.08] mb-5">
               Kenya&rsquo;s #1 SaaS platform<br />
               for business<br />
               <span className="text-sky-500">automation &amp; payments</span>
             </h1>
 
-            {/* First paragraph — keyword rich, readable */}
+            {/* First paragraph â keyword rich, readable */}
             <p className="text-slate-600 leading-relaxed mb-6 text-base">
               Gigva is a SaaS platform in Kenya built for Nairobi businesses and SMEs across Kenya.
-              It automatically reconciles M-Pesa transactions, manages payroll with Kenya-compliant
-              tax calculations, and delivers real-time analytics &mdash; so your business runs smarter,
+              It automatically reconciles M-Pesa transactions, automates M-Pesa payments and reconciliation, and delivers real-time analytics &mdash; so your business runs smarter,
               not harder.
             </p>
 
@@ -80,13 +79,13 @@ export default function Hero() {
               ))}
             </div>
 
-            {/* H2 — secondary keyword targeting */}
+            {/* H2 â secondary keyword targeting */}
             <h2 className="mt-6 text-sm font-semibold text-slate-500 uppercase tracking-widest">
               Kenya&rsquo;s Most Trusted Business Software &mdash; Serving Nairobi &amp; East Africa
             </h2>
           </div>
 
-          {/* Right — mini dashboard preview */}
+          {/* Right â mini dashboard preview */}
           <div className="hidden md:block">
             <div className="bg-slate-900 rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
               {/* Window chrome */}
