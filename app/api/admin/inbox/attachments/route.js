@@ -1,7 +1,9 @@
 /**
  * app/api/admin/inbox/attachments/route.js
  * GET /api/admin/inbox/attachments?messageId=xxx
- * List attachments for a sent email message.
+ *   List attachments for an inbox message.
+ * GET /api/admin/inbox/attachments/:id
+ *   Download a specific attachment by its id.
  * Requires valid staff/admin JWT.
  */
 
@@ -30,29 +32,41 @@ export async function GET(req) {
   try {
     const database = db()
 
-    // Verify the user has access to this email
+    // Verify the user has access to this message (by inbox_messages table)
     if (!user.is_admin) {
-      const email = database.prepare(
-        'SELECT from_email, to_email FROM sent_emails WHERE id = ?'
-      ).get(messageId)
+      let hasAccess = false
+      try {
+        const inboxMsg = database.prepare(
+          'SELECT id FROM inbox_messages WHERE id = ? AND to_email = ? COLLATE NOCASE LIMIT 1'
+        ).get(messageId, user.email)
+        if (inboxMsg) hasAccess = true
+      } catch(e) {}
 
-      if (!email) {
-        return NextResponse.json({ ok: true, attachments: [] })
+      // Also check sent_emails as fallback
+      if (!hasAccess) {
+        try {
+          const sentMsg = database.prepare(
+            'SELECT id FROM sent_emails WHERE id = ? AND (from_email = ? OR to_email LIKE ?) COLLATE NOCASE LIMIT 1'
+          ).get(messageId, user.email, '%' + user.email + '%')
+          if (sentMsg) hasAccess = true
+        } catch(e) {}
       }
 
-      const userEmail = user.email.toLowerCase()
-      const isRelated = email.from_email.toLowerCase() === userEmail ||
-                        email.to_email.toLowerCase().includes(userEmail)
-
-      if (!isRelated) {
-        return NextResponse.json({ ok: false, msg: 'Access denied.' }, { status: 403 })
+      if (!hasAccess) {
+        return NextResponse.json({ ok: true, attachments: [] })
       }
     }
 
-    // Get attachments without the data blob (just metadata)
-    const rows = database.prepare(
-      'SELECT id, filename, mime_type, size, created_at FROM message_attachments WHERE message_id = ? ORDER BY rowid ASC'
-    ).all(messageId)
+    // Get attachments metadata (no data blob)
+    let rows = []
+    try {
+      rows = database.prepare(
+        'SELECT id, filename, mime_type, size, created_at FROM message_attachments WHERE message_id = ? ORDER BY rowid ASC'
+      ).all(messageId)
+    } catch(e) {
+      // Table may not exist yet
+      rows = []
+    }
 
     return NextResponse.json({ ok: true, attachments: rows })
   } catch (err) {
