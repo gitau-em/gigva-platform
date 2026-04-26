@@ -1,4 +1,5 @@
 'use client' // KRA payroll engine v2
+import CompanyLogo from '@/components/CompanyLogo'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -134,12 +135,7 @@ function PayslipDocument({ slip, emp }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '24px 30px 18px', borderBottom: '3px solid #0f2d5c', backgroundColor: '#fff' }}>
         {/* Left: Gigva Logo */}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img
-            src="/gigva-logo.png"
-            alt="Gigva Kenya"
-            style={{ width: '160px', height: 'auto', display: 'block', objectFit: 'contain' }}
-            onError={e => { e.target.style.display = 'none' }}
-          />
+          <CompanyLogo variant="document" />
         </div>
         {/* Right: Company details */}
         <div style={{ textAlign: 'right', fontFamily: 'Arial, sans-serif' }}>
