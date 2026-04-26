@@ -43,7 +43,7 @@ const TEAM = [
     name: 'Njeri Mwangi',
     role: 'Head of Product',
     since: 'With Gigva since 2017',
-    bio: 'Drives the product vision by translating customer feedback into a focused, high-impact roadmap. She keeps the team aligned on what matters most — building tools that genuinely solve the problems Kenyan businesses face every day.',
+    bio: 'Drives the product vision by translating customer feedback into a focused, high-impact roadmap. She keeps the team aligned on what matters most, building tools that genuinely solve the problems Kenyan businesses face every day.',
     photo: '/team/njeri-mwangi.webp',
   },
   {
@@ -169,7 +169,7 @@ export default function AboutPage() {
               {
                 icon: Target,
                 label: 'Our focus',
-                text: 'M-Pesa payment tracking and automated reconciliation. One problem, solved properly — we have not tried to be everything to everyone.',
+                text: 'M-Pesa payment tracking and automated reconciliation. One problem, solved properly. We have not tried to be everything to everyone.',
               },
             ].map(({ icon: Icon, label, text }) => (
               <div key={label} className="bg-sky-50 border border-sky-100 rounded-2xl p-5">
@@ -213,7 +213,7 @@ export default function AboutPage() {
               Gigva was founded in Nairobi in 2012 at a time when M-Pesa had already become the
               primary payment channel for millions of Kenyan businesses. The technology was
               mature. The volume was large. But the operational tooling for business owners had
-              not kept pace — there was no straightforward way for a retail shop or distributor
+              not kept pace. There was no straightforward way for a retail shop or distributor
               to connect their M-Pesa receipts to their invoices without downloading statements
               and working through them manually.
             </p>
@@ -268,7 +268,7 @@ export default function AboutPage() {
             <h2 className="text-2xl font-bold text-slate-900 mb-2">The leads behind every function</h2>
             <div className="bg-sky-50 border border-sky-100 rounded-xl px-5 py-4 max-w-2xl">
               <p className="text-sm text-slate-700 leading-relaxed">
-                Meet the leads who drive Gigva forward — each responsible for a core function of the business and the team behind it.
+                Meet the leads who drive Gigva forward, each responsible for a core function of the business and the team behind it.
               </p>
             </div>
           </div>
