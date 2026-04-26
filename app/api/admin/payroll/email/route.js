@@ -117,8 +117,8 @@ async function buildPayslipPdf(slip, emp) {
 
   // -- HEADER: Logo left | Company details right --
   // Logo dimensions: 160pt wide, maintain aspect ratio (logo is ~4:3 ratio => ~120pt tall)
-  const logoW = 160
-  const logoH = 110  // approximate aspect ratio for Gigva logo
+  const logoW = 140 // Standard LOGO_WIDTH per branding system (px -> pt for PDF)
+  const logoH = 37  // Standard aspect ratio: 140 * (80/304) rounded
   const headerTop = 40  // 40pt from top = ~14mm (professional top margin)
   const headerContentH = logoH + 12  // header content height
   const headerTotalH = headerContentH + 20  // with padding below
