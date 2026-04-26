@@ -172,10 +172,19 @@ export async function GET(req) {
     const empId = searchParams.get('employee_id')
     if (!empId) return NextResponse.json({ ok: false, msg: 'employee_id required' }, { status: 400 })
     const slips = db().prepare(`SELECT p.*, e.name as emp_name, e.email as emp_email, e.department as emp_department,
-      e.designation as emp_designation, e.employee_id as emp_employee_id
+      e.designation as emp_designation, e.employee_id as emp_employee_id,
+      e.address as emp_address, e.bank_account as emp_bank_account, e.bank_name as emp_bank_name,
+      e.bank_code as emp_bank_code, e.phone as emp_phone, e.marital_status as emp_marital_status,
+      e.date_employed as emp_date_employed
       FROM payroll_payslips p LEFT JOIN payroll_employees e ON p.employee_id = e.id
       WHERE p.employee_id = ? ORDER BY p.period_year DESC, p.period_month DESC`).all(empId)
-    return NextResponse.json({ ok: true, payslips: slips })
+    const reshapedSlips = slips.map(slip => {
+      const { emp_name, emp_email, emp_department, emp_designation, emp_employee_id,
+              emp_address, emp_bank_account, emp_bank_name, emp_bank_code,
+              emp_phone, emp_marital_status, emp_date_employed, ...slipData } = slip
+      return { ...slipData, payroll_employees: { name: emp_name, email: emp_email, department: emp_department, designation: emp_designation, employee_id: emp_employee_id, address: emp_address, bank_account: emp_bank_account, bank_name: emp_bank_name, bank_code: emp_bank_code, phone: emp_phone, marital_status: emp_marital_status, date_employed: emp_date_employed } }
+    })
+    return NextResponse.json({ ok: true, payslips: reshapedSlips })
   } catch(e) { return NextResponse.json({ ok: false, msg: e.message }, { status: 500 }) }
 }
 
