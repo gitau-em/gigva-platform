@@ -136,7 +136,7 @@ async function buildPayslipPdf(slip, emp) {
   const psLabel = 'Payslip'
   const psBtnW = helveticaBold.widthOfTextAtSize(psLabel, 13) + 24
   const psBtnX = margin + contentW / 2 - psBtnW / 2
-  const psBtnTop = headerTop + 4
+  const psBtnTop = headerTop + 30
   drawRect(page, psBtnX, topY(psBtnTop + 20), psBtnW, 20, '#1a56db')
   page.drawText(psLabel, { x: psBtnX + 12, y: topY(psBtnTop + 14), font: helveticaBold, size: 13, color: rgb(1,1,1) })
 
@@ -148,9 +148,9 @@ async function buildPayslipPdf(slip, emp) {
       const logoBytes = await logoRes.arrayBuffer()
       const logoImg = await pdfDoc.embedPng(logoBytes)
       const logoW = 100
-      const logoH = 100
+      const logoH = 80
       const logoX = margin + contentW - logoW
-      const logoTop2 = headerTop + 2
+      const logoTop2 = headerTop
       page.drawImage(logoImg, {
         x: logoX,
         y: topY(logoTop2 + logoH),
@@ -162,13 +162,13 @@ async function buildPayslipPdf(slip, emp) {
 
     // Divider line
   page.drawLine({
-    start: { x: margin, y: topY(headerTop + 54) },
-    end: { x: margin + contentW, y: topY(headerTop + 54) },
+    start: { x: margin, y: topY(headerTop + 88) },
+    end: { x: margin + contentW, y: topY(headerTop + 88) },
     thickness: 0.7, color: rgb(0.88, 0.9, 0.92)
   })
 
   // -- SALARY SLIP TITLE BAR --
-  const titleTop = headerTop + 60
+  const titleTop = headerTop + 94
   drawRect(page, margin, topY(titleTop + 17), contentW, 17, '#1a56db')
   const titleText = 'Salary Slip of ' + emp.name + ' for ' + monthName + ' ' + slip.period_year
   const titleW = helveticaBold.widthOfTextAtSize(titleText, 9.5)
