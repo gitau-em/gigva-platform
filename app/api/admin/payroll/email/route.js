@@ -77,7 +77,7 @@ async function buildPayslipPdf(slip, emp) {
   // Override address and bank details for Edward
   if (emp.name && emp.name.toLowerCase().includes('edward')) {
     emp = { ...emp,
-      address: 'Unity Homes, Tatu City, Ruiru â Kiambu, Kenya',
+      address: 'Unity Homes, Tatu City, Ruiru - Kiambu, Kenya',
       bank_account: '2048413202',
       bank_name: 'ABSA- market branch'
     }
@@ -312,11 +312,11 @@ async function buildPayslipPdf(slip, emp) {
   } catch (_) { /* stamp optional */ }
 
   // Ã¢ÂÂÃ¢ÂÂ BOTTOM FOOTER Ã¢ÂÂÃ¢ÂÂ
-  // ── BOTTOM FOOTER: pinned to bottom of A4 ──
+  // -- BOTTOM FOOTER: pinned to bottom of A4 --
   const footerLineY = margin + 14
   const footerTextY = margin + 3
   page.drawLine({ start: { x: margin, y: footerLineY }, end: { x: margin + contentW, y: footerLineY }, thickness: 0.5, color: rgb(0.88,0.9,0.92) })
-  const footText = 'Gigva Kenya  •  +254 701 443 444  •  hello@gigva.co.ke  •  www.gigva.co.ke'
+  const footText = 'Gigva Kenya  *  +254 701 443 444  *  hello@gigva.co.ke  *  www.gigva.co.ke'
   const ftW = helvetica.widthOfTextAtSize(footText, 7)
   page.drawText(footText, { x: margin + contentW / 2 - ftW / 2, y: footerTextY, font: helvetica, size: 7, color: rgb(0.42,0.47,0.53) })
 
