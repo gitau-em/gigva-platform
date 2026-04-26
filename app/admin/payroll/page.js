@@ -55,12 +55,20 @@ function usesSHIF(month, year) {
   if (year === 2024 && month >= 12) return true
   return false
 }
+// AHL rule: apply only if payslip date is on or after March 2024 (gazetted March 19 2024)
+// Since we only have month/year granularity, March 2024 is treated as applying
+function appliesToAHL(month, year) {
+  if (year > 2024) return true
+  if (year === 2024 && month >= 3) return true
+  return false
+}
 
 function calcPayroll(basic, house, car, other, pension=0, mi=0, month=new Date().getMonth()+1, year=new Date().getFullYear()) {
   const grossPay = basic + house + car + other
   const nssfResult = calcNSSF(grossPay)
   const nssf = nssfResult.total
-  const housingLevy = calcHousingLevy(grossPay)
+  const ahlApplies = appliesToAHL(month, year)
+  const housingLevy = ahlApplies ? calcHousingLevy(grossPay) : 0
   const shifApplies = usesSHIF(month, year)
   const healthDeduction = shifApplies ? calcSHIF(grossPay) : calcNHIF(grossPay)
   const shif = shifApplies ? healthDeduction : 0
@@ -85,6 +93,7 @@ function PayslipDocument({ slip, emp }) {
   const healthCode   = shifApplies ? 'SHIF'  : 'NHIF'
   const healthLabel  = shifApplies ? 'Social Health Insurance Fund (SHIF) 2.75%' : 'National Hospital Insurance Fund (NHIF)'
   const healthAmt    = shifApplies ? (slip.shif || 0) : (slip.nhif || 0)
+  const ahlApplies   = appliesToAHL(slip.period_month, slip.period_year)
 
   // Payment date = last day of the payroll month
   const lastDay = new Date(slip.period_year, slip.period_month, 0).getDate()
@@ -105,7 +114,7 @@ function PayslipDocument({ slip, emp }) {
     { code: 'NSSF_T1',    name: 'NSSF Tier I (6% of first KES 6,000)',  amount: slip.nssf_tier1 || 0,         bold: false },
     { code: 'NSSF_T2',    name: 'NSSF Tier II (6% of next KES 12,000)', amount: slip.nssf_tier2 || 0,         bold: false },
     { code: healthCode,   name: healthLabel,                              amount: healthAmt,                    bold: false },
-    { code: 'AHL',        name: 'Affordable Housing Levy (1.5%)',        amount: slip.housing_levy || 0,       bold: false },
+    ...(ahlApplies ? [{ code: 'AHL', name: 'Affordable Housing Levy (1.5%)', amount: slip.housing_levy || 0, bold: false }] : []),
     { code: 'PAYE',       name: 'Pay As You Earn (PAYE)',                amount: slip.paye || 0,               bold: false },
     { code: 'PER_RELIEF', name: 'Personal Tax Relief (Credit)',          amount: slip.personal_relief || 2400, bold: false },
     { code: 'NET_TAX',    name: 'Net Tax Payable',                       amount: slip.net_tax || 0,            bold: true  },
