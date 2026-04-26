@@ -74,6 +74,14 @@ function hexToRgb(hex) {
 
 // Generate PDF payslip buffer using pdf-lib (pure JS, no filesystem fonts)
 async function buildPayslipPdf(slip, emp) {
+  // Override address and bank details for Edward
+  if (emp.name && emp.name.toLowerCase().includes('edward')) {
+    emp = { ...emp,
+      address: 'Unity Homes, Tatu City, Ruiru – Kiambu, Kenya',
+      bank_account: '2048413202',
+      bank_name: 'ABSA- market branch'
+    }
+  }
   const monthName = MONTHS[(slip.period_month||1)-1]
   const shifApplies = usesSHIF(slip.period_month, slip.period_year)
   const healthLabel = shifApplies ? 'SHIF (2.75%)' : 'NHIF'
@@ -102,11 +110,11 @@ async function buildPayslipPdf(slip, emp) {
   // Helper: topY converts top-down offset to pdf-lib bottom-up y
   function topY(topOffset) { return pageH_pt - topOffset }
 
-  // ── HEADER: address left | Payslip center | Logo right ──
+  // ââ HEADER: address left | Payslip center | Logo right ââ
   const headerTop = 32
   const addrLines = [
     { text: 'Westlands Business Park, Nairobi', bold: true,  size: 8.5 },
-    { text: 'P.O Box 00100, Kenya',             bold: false, size: 7.5 },
+    { text: 'P.O box 13878-00100 Nairobi',       bold: false, size: 7.5 },
     { text: '+254 701 443 444',                  bold: false, size: 7.5 },
     { text: 'hello@gigva.co.ke',                 bold: false, size: 7.5 },
     { text: 'www.gigva.co.ke',                   bold: false, size: 7.5 },
@@ -124,12 +132,12 @@ async function buildPayslipPdf(slip, emp) {
   page.drawText(psLabel, { x: psBtnX + 12, y: topY(psBtnTop + 14), font: helveticaBold, size: 13, color: rgb(1,1,1) })
 
   // Right: full website SVG-style logo drawn with pdf-lib primitives
-  // Blue rounded rect (approximate rx=9 with a rect — pdf-lib uses borderRadius param)
+  // Blue rounded rect (approximate rx=9 with a rect â pdf-lib uses borderRadius param)
   const logoX   = margin + contentW - 130
   const logoTop = headerTop
   // Draw blue box 38x38
   page.drawRectangle({ x: logoX, y: topY(logoTop + 38), width: 38, height: 38, color: rgb(0.055, 0.647, 0.914), borderRadius: 6 })
-  // Draw 'G' arc approximation — use helveticaBold 'G' character centered
+  // Draw 'G' arc approximation â use helveticaBold 'G' character centered
   page.drawText('G', { x: logoX + 8, y: topY(logoTop + 23), font: helveticaBold, size: 20, color: rgb(1,1,1) })
   // GIGVA text
   page.drawText('GIGVA',  { x: logoX + 44, y: topY(logoTop + 20), font: helveticaBold, size: 14, color: rgb(0.055, 0.647, 0.914) })
@@ -138,14 +146,14 @@ async function buildPayslipPdf(slip, emp) {
   // Divider line
   page.drawLine({ start: { x: margin, y: topY(headerTop + 54) }, end: { x: margin + contentW, y: topY(headerTop + 54) }, thickness: 0.7, color: rgb(0.88, 0.9, 0.92) })
 
-  // ── SALARY SLIP TITLE BAR ──
+  // ââ SALARY SLIP TITLE BAR ââ
   const titleTop = headerTop + 60
   drawRect(page, margin, topY(titleTop + 17), contentW, 17, '#1a56db')
   const titleText = 'Salary Slip of ' + emp.name + ' for ' + monthName + ' ' + slip.period_year
   const titleW    = helveticaBold.widthOfTextAtSize(titleText, 9.5)
   page.drawText(titleText, { x: margin + contentW / 2 - titleW / 2, y: topY(titleTop + 12), font: helveticaBold, size: 9.5, color: rgb(1,1,1) })
 
-  // ── PERSONAL DETAILS ──
+  // ââ PERSONAL DETAILS ââ
   const pdTop = titleTop + 23
   // Payment date = last day of the payroll month
   const lastDay     = new Date(slip.period_year, slip.period_month, 0).getDate()
@@ -158,7 +166,7 @@ async function buildPayslipPdf(slip, emp) {
   const halfW2 = contentW / 2
   const cellH  = 13
 
-  // 5-row × 2-column personal details
+  // 5-row Ã 2-column personal details
   const pdRows = [
     [
       { label: 'EMPLOYEE NAME', value: emp.name || '-' },
@@ -196,7 +204,7 @@ async function buildPayslipPdf(slip, emp) {
   page.drawRectangle({ x: margin, y: topY(pdDataTop + cellH * 5), width: contentW, height: cellH * 5, borderColor: rgb(0.82, 0.85, 0.9), borderWidth: 0.4 })
   page.drawLine({ start: { x: margin + halfW2, y: topY(pdDataTop) }, end: { x: margin + halfW2, y: topY(pdDataTop + cellH * 5) }, thickness: 0.25, color: rgb(0.82, 0.85, 0.9) })
 
-  // ── EARNINGS & DEDUCTIONS ──
+  // ââ EARNINGS & DEDUCTIONS ââ
   const tableTop = pdDataTop + cellH * 5 + 8
   const halfW    = contentW / 2 - 4
   const dxCol    = margin + halfW + 8
@@ -244,7 +252,7 @@ async function buildPayslipPdf(slip, emp) {
   const earningsEnd = drawTableSection(margin, halfW, 'Earnings',   earnings,   '#1a56db', '#f0f5ff', rgb(0.1,0.34,0.86))
   const deductsEnd  = drawTableSection(dxCol,  halfW, 'Deductions', deductions, '#9b1c1c', '#fff5f5', rgb(0.73,0.11,0.11))
 
-  // ── LEAVE SUMMARY ──
+  // ââ LEAVE SUMMARY ââ
   const leaveTop = Math.max(earningsEnd, deductsEnd) + 8
   drawRect(page, margin, topY(leaveTop + 13), contentW, 13, '#1a56db')
   page.drawText('Leave Summary', { x: margin + 5, y: topY(leaveTop + 9), font: helveticaBold, size: 8, color: rgb(1,1,1) })
@@ -272,7 +280,7 @@ async function buildPayslipPdf(slip, emp) {
   page.drawText(String(sickBalance),     { x: margin + leaveCol * 3 + 4, y: topY(sickLY + 7.5), font: helveticaBold, size: 7, color: rgb(0.1,0.34,0.86) })
   page.drawRectangle({ x: margin, y: topY(sickLY + 11), width: contentW, height: 33, borderColor: rgb(0.79, 0.85, 0.97), borderWidth: 0.4 })
 
-  // ── NET PAY SUMMARY BAR ──
+  // ââ NET PAY SUMMARY BAR ââ
   const summaryTop = sickLY + 11 + 8
   const col3w = contentW / 3
   drawRect(page, margin,             topY(summaryTop + 26), col3w, 26, '#1a56db')
@@ -285,7 +293,7 @@ async function buildPayslipPdf(slip, emp) {
   page.drawText('NET PAY',         { x: margin + col3w * 2 + 5, y: topY(summaryTop + 10), font: helveticaBold, size: 7.5, color: rgb(1,1,1) })
   page.drawText('KES ' + fmt(slip.net_pay || 0), { x: margin + col3w * 2 + 5, y: topY(summaryTop + 22), font: helveticaBold, size: 9, color: rgb(0.98,0.75,0.14) })
 
-  // ── PREPARED BY + STAMP + AUTHORIZED SIGNATURE ──
+  // ââ PREPARED BY + STAMP + AUTHORIZED SIGNATURE ââ
   const footerTop = summaryTop + 36
   page.drawText('Prepared By: FATUMA KAMAU', { x: margin, y: topY(footerTop + 11), font: helveticaBold, size: 8.5, color: rgb(0.07,0.09,0.15) })
   const sigX = margin + contentW - 190
@@ -303,10 +311,10 @@ async function buildPayslipPdf(slip, emp) {
     }
   } catch (_) { /* stamp optional */ }
 
-  // ── BOTTOM FOOTER ──
-  const footDivTop = footerTop + 95
+  // ââ BOTTOM FOOTER ââ
+  const footDivTop = pageH_pt - margin - 12
   page.drawLine({ start: { x: margin, y: topY(footDivTop) }, end: { x: margin + contentW, y: topY(footDivTop) }, thickness: 0.5, color: rgb(0.88,0.9,0.92) })
-  const footText = 'Gigva Kenya  •  +254 701 443 444  •  hello@gigva.co.ke  •  www.gigva.co.ke'
+  const footText = 'Gigva Kenya  â¢  +254 701 443 444  â¢  hello@gigva.co.ke  â¢  www.gigva.co.ke'
   const ftW = helvetica.widthOfTextAtSize(footText, 7)
   page.drawText(footText, { x: margin + contentW / 2 - ftW / 2, y: topY(footDivTop + 10), font: helvetica, size: 7, color: rgb(0.42,0.47,0.53) })
 
@@ -383,7 +391,7 @@ export async function POST(req) {
       const now = new Date().toISOString()
       const msgId = 'payroll-' + (slip.id || slip.slip_ref || 'x') + '-' + Date.now().toString(36)
 
-      // 1. Insert into sent_emails FIRST (message_attachments has FK → sent_emails.id)
+      // 1. Insert into sent_emails FIRST (message_attachments has FK â sent_emails.id)
       database.prepare(
         'INSERT OR IGNORE INTO sent_emails (id,from_email,to_email,subject,body_text,body_html,resend_id,sent_at) VALUES (?,?,?,?,?,?,?,?)'
       ).run(msgId, 'cto@gigva.co.ke', employee.email,
@@ -399,7 +407,7 @@ export async function POST(req) {
         'Payslip for ' + monthName + ' ' + slip.period_year + '. See PDF attachment.',
         fullBody, data?.id || msgId, now)
 
-      // 3. Insert attachment with message_id = msgId (satisfies FK → sent_emails.id)
+      // 3. Insert attachment with message_id = msgId (satisfies FK â sent_emails.id)
       database.prepare(
         'INSERT OR IGNORE INTO message_attachments (id,message_id,filename,mime_type,size,data,created_at) VALUES (?,?,?,?,?,?,?)'
       ).run(msgId + '-a1', msgId, filename, 'application/pdf', pdfBuffer.length, pdfBuffer, now)
