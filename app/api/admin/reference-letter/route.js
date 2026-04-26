@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { appendSignature } from '@/lib/emailSignature'
 
 // Only CTO can generate reference letters
 function checkAccess(user) {
@@ -226,7 +227,7 @@ export async function POST(req) {
           from: 'Gigva CTO <cto@gigva.co.ke>',
           to: [emp.email],
           subject: 'Your Reference Letter - Gigva Kenya',
-          html: '<div style="font-family:Arial,sans-serif;padding:24px;"><p>Dear ' + emp.name + ',</p><p>Please find your reference letter attached as a PDF.</p><p>Best regards,<br><b>Aisha Waweru</b><br>Chief Technology Officer, Gigva Kenya</p></div>',
+          html: appendSignature('<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;padding:24px 24px 8px;color:#222;"><p>Dear ' + emp.name + ',</p><p>Please find your reference letter from <strong>Gigva Kenya</strong> attached as a PDF.</p><p>Should you require any clarification, please contact us at <a href="mailto:hello@gigva.co.ke" style="color:#0ea5e9;">hello@gigva.co.ke</a>.</p><p>Best regards,<br><strong>Aisha Waweru</strong><br>Chief Technology Officer, Gigva Kenya</p></div>'),
           attachments: [{ filename, content: pdfBase64 }],
         })
       } catch (emailErr) {
