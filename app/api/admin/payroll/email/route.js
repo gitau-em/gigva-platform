@@ -115,76 +115,88 @@ async function buildPayslipPdf(slip, emp) {
   // Helper: topY converts top-down offset to pdf-lib bottom-up y
   function topY(topOffset) { return pageH_pt - topOffset }
 
-  // -- HEADER: address left | Payslip center | Logo right --
-  const headerTop = 32
-  const addrLines = [
-    { text: 'Westlands Business Park, Nairobi', bold: true, size: 8.5 },
-    { text: 'P.O box 13878-00100 Nairobi', bold: false, size: 7.5 },
-    { text: '+254 701 443 444', bold: false, size: 7.5 },
-    { text: 'hello@gigva.co.ke', bold: false, size: 7.5 },
-    { text: 'www.gigva.co.ke', bold: false, size: 7.5 },
-  ]
-  addrLines.forEach((l, i) => {
-    page.drawText(l.text, {
-      x: margin, y: topY(headerTop + i * 10),
-      font: l.bold ? helveticaBold : helvetica,
-      size: l.size, color: rgb(0.22, 0.27, 0.36)
-    })
-  })
+  // -- HEADER: Logo left | Company details right --
+  // Logo dimensions: 160pt wide, maintain aspect ratio (logo is ~4:3 ratio => ~120pt tall)
+  const logoW = 160
+  const logoH = 110  // approximate aspect ratio for Gigva logo
+  const headerTop = 40  // 40pt from top = ~14mm (professional top margin)
+  const headerContentH = logoH + 12  // header content height
+  const headerTotalH = headerContentH + 20  // with padding below
 
-  // Center: "Payslip" button box
-  const psLabel = 'Payslip'
-  const psBtnW = helveticaBold.widthOfTextAtSize(psLabel, 13) + 24
-  const psBtnX = margin + contentW / 2 - psBtnW / 2
-  const psBtnTop = headerTop + 30
-  drawRect(page, psBtnX, topY(psBtnTop + 20), psBtnW, 20, '#1a56db')
-  page.drawText(psLabel, { x: psBtnX + 12, y: topY(psBtnTop + 14), font: helveticaBold, size: 13, color: rgb(1,1,1) })
-
-  // Right: Official Gigva Kenya logo image
+  // Draw logo top-left
   try {
     const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'
     const logoRes = await fetch(siteBase + '/gigva-logo.png')
     if (logoRes.ok) {
       const logoBytes = await logoRes.arrayBuffer()
       const logoImg = await pdfDoc.embedPng(logoBytes)
-      const logoW = 100
-      const logoH = 80
-      const logoX = margin + contentW - logoW
-      const logoTop2 = headerTop
+      // Get actual dimensions to preserve aspect ratio
+      const imgDims = logoImg.scale(1)
+      const aspectRatio = imgDims.height / imgDims.width
+      const finalLogoH = Math.round(logoW * aspectRatio)
       page.drawImage(logoImg, {
-        x: logoX,
-        y: topY(logoTop2 + logoH),
+        x: margin,
+        y: topY(headerTop + finalLogoH),
         width: logoW,
-        height: logoH,
+        height: finalLogoH,
       })
     }
   } catch (_) { /* logo optional */ }
 
-    // Divider line
+  // Company details - RIGHT side of header
+  const companyDetails = [
+    { text: 'GIGVA KENYA', bold: true, size: 12, color: rgb(0.08, 0.30, 0.65) },
+    { text: 'Westlands Business Park, Nairobi', bold: false, size: 8, color: rgb(0.25, 0.25, 0.25) },
+    { text: 'P.O Box 13878-00100, Nairobi, Kenya', bold: false, size: 8, color: rgb(0.25, 0.25, 0.25) },
+    { text: '+254 701 443 444', bold: false, size: 8, color: rgb(0.25, 0.25, 0.25) },
+    { text: 'hello@gigva.co.ke', bold: false, size: 8, color: rgb(0.25, 0.25, 0.25) },
+    { text: 'www.gigva.co.ke', bold: false, size: 8, color: rgb(0.25, 0.25, 0.25) },
+  ]
+  const companyX = margin + logoW + 20  // start after logo with 20pt gap
+  companyDetails.forEach((d, i) => {
+    const lineY = topY(headerTop + (i === 0 ? 14 : 18 + i * 11))
+    const textW = (d.bold ? helveticaBold : helvetica).widthOfTextAtSize(d.text, d.size)
+    page.drawText(d.text, {
+      x: margin + contentW - textW,  // right-aligned
+      y: lineY,
+      font: d.bold ? helveticaBold : helvetica,
+      size: d.size,
+      color: d.color,
+    })
+  })
+
+  // Bold horizontal divider line under header
+  const dividerY = topY(headerTop + headerTotalH)
   page.drawLine({
-    start: { x: margin, y: topY(headerTop + 88) },
-    end: { x: margin + contentW, y: topY(headerTop + 88) },
-    thickness: 0.7, color: rgb(0.88, 0.9, 0.92)
+    start: { x: margin, y: dividerY },
+    end: { x: margin + contentW, y: dividerY },
+    thickness: 1.5, color: rgb(0.08, 0.30, 0.65)
+  })
+  // Thin second line for double-rule effect
+  page.drawLine({
+    start: { x: margin, y: dividerY - 3 },
+    end: { x: margin + contentW, y: dividerY - 3 },
+    thickness: 0.5, color: rgb(0.08, 0.30, 0.65)
   })
 
   // -- SALARY SLIP TITLE BAR --
-  const titleTop = headerTop + 94
-  drawRect(page, margin, topY(titleTop + 17), contentW, 17, '#1a56db')
-  const titleText = 'Salary Slip of ' + emp.name + ' for ' + monthName + ' ' + slip.period_year
-  const titleW = helveticaBold.widthOfTextAtSize(titleText, 9.5)
+  const titleTop = headerTop + headerTotalH + 8
+  drawRect(page, margin, topY(titleTop + 18), contentW, 18, '#0f2d5c')
+  const titleText = 'SALARY SLIP  |  ' + emp.name + '  |  ' + monthName.toUpperCase() + ' ' + slip.period_year
+  const titleW = helveticaBold.widthOfTextAtSize(titleText, 9)
   page.drawText(titleText, {
-    x: margin + contentW / 2 - titleW / 2, y: topY(titleTop + 12),
-    font: helveticaBold, size: 9.5, color: rgb(1,1,1)
+    x: margin + contentW / 2 - titleW / 2, y: topY(titleTop + 12.5),
+    font: helveticaBold, size: 9, color: rgb(1,1,1)
   })
 
-  // -- PERSONAL DETAILS --
+// -- PERSONAL DETAILS --
   const pdTop = titleTop + 23
   // Payment date = last day of the payroll month
   const lastDay = new Date(slip.period_year, slip.period_month, 0).getDate()
   const paymentDate = lastDay + ' ' + monthName + ' ' + slip.period_year
   const empWorkId = emp.employee_id || ('GV-' + slip.period_year + '-' + String(emp.id || 0).padStart(3, '0'))
 
-  drawRect(page, margin, topY(pdTop + 13), contentW, 13, '#1a56db')
+  drawRect(page, margin, topY(pdTop + 13), contentW, 13, '#0f2d5c')
   page.drawText('Personal Details', { x: margin + 5, y: topY(pdTop + 9), font: helveticaBold, size: 8, color: rgb(1,1,1) })
 
   const halfW2 = contentW / 2
@@ -288,12 +300,12 @@ async function buildPayslipPdf(slip, emp) {
     return ry
   }
 
-  const earningsEnd = drawTableSection(margin, halfW, 'Earnings', earnings, '#1a56db', '#f0f5ff', rgb(0.1,0.34,0.86))
+  const earningsEnd = drawTableSection(margin, halfW, 'Earnings', earnings, '#0f2d5c', '#f0f5ff', rgb(0.1,0.34,0.86))
   const deductsEnd = drawTableSection(dxCol, halfW, 'Deductions', deductions, '#9b1c1c', '#fff5f5', rgb(0.73,0.11,0.11))
 
   // -- LEAVE SUMMARY --
   const leaveTop = Math.max(earningsEnd, deductsEnd) + 8
-  drawRect(page, margin, topY(leaveTop + 13), contentW, 13, '#1a56db')
+  drawRect(page, margin, topY(leaveTop + 13), contentW, 13, '#0f2d5c')
   page.drawText('Leave Summary', { x: margin + 5, y: topY(leaveTop + 9), font: helveticaBold, size: 8, color: rgb(1,1,1) })
 
   // Header row
@@ -330,7 +342,7 @@ async function buildPayslipPdf(slip, emp) {
   // -- NET PAY SUMMARY BAR --
   const summaryTop = sickLY + 11 + 8
   const col3w = contentW / 3
-  drawRect(page, margin, topY(summaryTop + 26), col3w, 26, '#1a56db')
+  drawRect(page, margin, topY(summaryTop + 26), col3w, 26, '#0f2d5c')
   drawRect(page, margin + col3w, topY(summaryTop + 26), col3w, 26, '#1e3a8a')
   drawRect(page, margin + col3w * 2, topY(summaryTop + 26), col3w, 26, '#1e3a8a')
   page.drawText('GROSS PAY', { x: margin + 5, y: topY(summaryTop + 10), font: helveticaBold, size: 7.5, color: rgb(1,1,1) })
@@ -396,11 +408,11 @@ function buildEmailBodyHtml(slip, employee, monthName, filename) {
     + '<div style="text-align:center;margin-bottom:16px;">' + LOGO + '</div>'
     + '<p>Dear ' + employee.name + ',</p>'
     + '<p>Please find your payslip for <strong>' + monthName + ' ' + slip.period_year + '</strong> attached as a PDF to this email.</p>'
-    + '<table style="width:100%;border-collapse:collapse;background:#f0f5ff;border:2px solid #1a56db;margin:12px 0;">'
-    + '<tr><td colspan="2" style="padding:10px 14px;font-weight:bold;color:#fff;background:#1a56db;font-size:13px;">Payslip Summary - ' + monthName + ' ' + slip.period_year + '</td></tr>'
+    + '<table style="width:100%;border-collapse:collapse;background:#f0f5ff;border:2px solid #0f2d5c;margin:12px 0;">'
+    + '<tr><td colspan="2" style="padding:10px 14px;font-weight:bold;color:#fff;background:#0f2d5c;font-size:13px;">Payslip Summary - ' + monthName + ' ' + slip.period_year + '</td></tr>'
     + '<tr><td style="padding:6px 14px;">Gross Pay</td><td style="padding:6px 14px;font-weight:bold;text-align:right;">KES ' + fmtH(slip.gross_pay) + '</td></tr>'
     + '<tr style="background:#e8f0fe;"><td style="padding:6px 14px;">Total Deductions</td><td style="padding:6px 14px;font-weight:bold;text-align:right;color:#b91c1c;">KES ' + fmtH(total) + '</td></tr>'
-    + '<tr style="background:#dbeafe;"><td style="padding:8px 14px;font-weight:bold;font-size:15px;">NET PAY</td><td style="padding:8px 14px;font-weight:bold;text-align:right;color:#1a56db;font-size:16px;">KES ' + fmtH(slip.net_pay) + '</td></tr>'
+    + '<tr style="background:#dbeafe;"><td style="padding:8px 14px;font-weight:bold;font-size:15px;">NET PAY</td><td style="padding:8px 14px;font-weight:bold;text-align:right;color:#0f2d5c;font-size:16px;">KES ' + fmtH(slip.net_pay) + '</td></tr>'
     + '</table>'
     + '<div style="background:#ecfdf5;border:2px solid #10b981;border-radius:6px;padding:12px 16px;margin:12px 0;">'
     + '<p style="margin:0;font-size:14px;"><strong>PDF Attachment:</strong> Your full payslip is attached as <strong>' + filename + '</strong>.</p>'
