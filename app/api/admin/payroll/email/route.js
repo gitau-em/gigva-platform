@@ -140,51 +140,27 @@ async function buildPayslipPdf(slip, emp) {
   drawRect(page, psBtnX, topY(psBtnTop + 20), psBtnW, 20, '#1a56db')
   page.drawText(psLabel, { x: psBtnX + 12, y: topY(psBtnTop + 14), font: helveticaBold, size: 13, color: rgb(1,1,1) })
 
-  // Right: Logo matching the SVG in the web preview
-  // SVG: blue rounded rect 40x40, arc "G" shape (circle C, open right with horizontal bar),
-  //      small circle dot top-right, "GIGVA" text, "KENYA" text
-  const logoX = margin + contentW - 130
-  const logoTop = headerTop
+  // Right: Official Gigva Kenya logo image
+  try {
+    const siteBase = process.env.NEXT_PUBLIC_SITE_URL || 'https://gigva.co.ke'
+    const logoRes = await fetch(siteBase + '/gigva-logo.png')
+    if (logoRes.ok) {
+      const logoBytes = await logoRes.arrayBuffer()
+      const logoImg = await pdfDoc.embedPng(logoBytes)
+      const logoW = 120
+      const logoH = 32
+      const logoX = margin + contentW - logoW
+      const logoTop2 = headerTop + 4
+      page.drawImage(logoImg, {
+        x: logoX,
+        y: topY(logoTop2 + logoH),
+        width: logoW,
+        height: logoH,
+      })
+    }
+  } catch (_) { /* logo optional */ }
 
-  // Draw blue box 40x40 with borderRadius
-  page.drawRectangle({
-    x: logoX, y: topY(logoTop + 40),
-    width: 40, height: 40,
-    color: rgb(0.055, 0.647, 0.914),
-    borderRadius: 9
-  })
-
-  // Draw the "G" arc: approximate with a white circle outline (ellipse) + fill to hide right half
-  // The SVG path: arc from (28.5,10.5) to (28.5,29.5) radius 10.5 = full circle minus right opening
-  // Approximate: draw white filled ellipse (the "opening"), then white lines for the horizontal bar
-  // Strategy: draw a white ring by drawing a slightly smaller blue filled circle inside a white circle
-  // Center of the G arc circle in SVG coords: (28.5-10.5, 20) = (18, 20) relative to logo rect
-  // In pdf-lib coords (bottom-up), logoTop+40 is bottom of box:
-  //   svgY=10.5 -> pdfY = topY(logoTop+10.5), center at svgY=20 -> pdfY = topY(logoTop+20)
-  const gcx = logoX + 18  // center x of arc circle
-  const gcy = topY(logoTop + 20)  // center y (pdf bottom-up)
-  const gr = 9.5  // radius
-
-  // Draw white filled circle (the arc background)
-  page.drawCircle({ x: gcx, y: gcy, size: gr, color: rgb(1,1,1) })
-  // Draw blue inner circle to create ring effect (donut - stroke width ~3)
-  page.drawCircle({ x: gcx, y: gcy, size: gr - 3.5, color: rgb(0.055, 0.647, 0.914) })
-  // Re-cover the right half of the ring with a blue rectangle (open-right G shape)
-  page.drawRectangle({ x: gcx, y: gcy - gr, width: gr + 2, height: gr * 2, color: rgb(0.055, 0.647, 0.914) })
-  // Draw white horizontal bar (middle-right of G)
-  page.drawRectangle({ x: gcx, y: gcy - 1.5, width: gr, height: 3, color: rgb(1,1,1) })
-  // Draw white vertical bar on right side of G (bottom half of right arm)
-  page.drawRectangle({ x: gcx + gr - 4, y: gcy - gr, width: 3.5, height: gr, color: rgb(1,1,1) })
-
-  // Small circle dot (top-right accent from SVG: cx=32, cy=7, r=2.5)
-  page.drawCircle({ x: logoX + 32, y: topY(logoTop + 7), size: 2.5, color: rgb(0.49, 0.82, 0.99) })
-
-  // "GIGVA" text - bold, sky blue
-  page.drawText('GIGVA', { x: logoX + 44, y: topY(logoTop + 26), font: helveticaBold, size: 14, color: rgb(0.055, 0.647, 0.914) })
-  // "KENYA" text - smaller, lighter blue
-  page.drawText('KENYA', { x: logoX + 45, y: topY(logoTop + 37), font: helvetica, size: 7, color: rgb(0.49, 0.82, 0.99) })
-
-  // Divider line
+    // Divider line
   page.drawLine({
     start: { x: margin, y: topY(headerTop + 54) },
     end: { x: margin + contentW, y: topY(headerTop + 54) },
