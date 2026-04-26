@@ -196,9 +196,9 @@ export default function ReferenceLetterPage() {
         <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
           {saved && <span className="badge" style={{ background:'rgba(34,197,94,0.15)', color:'#4ade80', border:'1px solid rgba(74,222,128,0.2)' }}>✓ Auto-saved</span>}
           <span className="badge" style={{ background:'rgba(59,130,246,0.12)', color:'#60a5fa', border:'1px solid rgba(96,165,250,0.2)' }}>{form.refNumber}</span>
-          <button className="ab" style={{ background:'#1e293b', color:'#94a3b8' }} onClick={handleReset}}>↺ Reset</button>
-          <button className="ab" style={{ background:'#0f4c81', color:'#bfdbfe' }} onClick={handlePrint}}>🖨️ Print</button>
-          <button className="ab" style={{ background:'linear-gradient(135deg,#1e3a8a,#2563eb)', color:'white', boxShadow:'0 2px 10px rgba(37,99,235,0.35)' }} onClick={handleDownloadPDF}}>⬇ Download PDF</button>
+          <button className="ab" style={{ background:'#1e293b', color:'#94a3b8' }} onClick={handleReset}>↺ Reset</button>
+          <button className="ab" style={{ background:'#0f4c81', color:'#bfdbfe' }} onClick={handlePrint}>🖨️ Print</button>
+          <button className="ab" style={{ background:'linear-gradient(135deg,#1e3a8a,#2563eb)', color:'white', boxShadow:'0 2px 10px rgba(37,99,235,0.35)' }} onClick={handleDownloadPDF}>⬇ Download PDF</button>
         </div>
       </div>
 
