@@ -75,10 +75,10 @@ const TEAM = [
     name: 'Fatuma Kamau',
     role: 'People & Culture Lead',
     since: 'With Gigva since 2018',
-    bio: 'Leads hiring, onboarding, and the internal culture that keeps the Gigva team performing at its best. She creates the environment where people grow in their roles and stay committed to the company's mission.',
+    bio: 'Leads hiring, onboarding, and the internal culture that keeps the Gigva team performing at its best. She creates the environment where people grow in their roles and stay committed to the company\'s mission.',
     photo: '/team/fatuma-kamau.webp',
   },
-]]
+]
 
 function MemberCard({ person, size = 'md' }) {
   const isLg = size === 'lg'
