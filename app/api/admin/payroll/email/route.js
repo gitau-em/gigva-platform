@@ -147,10 +147,10 @@ async function buildPayslipPdf(slip, emp) {
     if (logoRes.ok) {
       const logoBytes = await logoRes.arrayBuffer()
       const logoImg = await pdfDoc.embedPng(logoBytes)
-      const logoW = 120
-      const logoH = 32
+      const logoW = 100
+      const logoH = 100
       const logoX = margin + contentW - logoW
-      const logoTop2 = headerTop + 4
+      const logoTop2 = headerTop + 2
       page.drawImage(logoImg, {
         x: logoX,
         y: topY(logoTop2 + logoH),
