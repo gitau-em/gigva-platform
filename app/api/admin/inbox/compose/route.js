@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { Resend } from 'resend'
+import { appendSignature } from '@/lib/emailSignature'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -30,7 +31,6 @@ export async function POST(req) {
       bcc = formData.get('bcc') || ''
       subject = formData.get('subject') || ''
       bodyText = formData.get('bodyText') || ''
-
       // Process file attachments
       const files = formData.getAll('attachments')
       for (const file of files) {
@@ -61,11 +61,12 @@ export async function POST(req) {
     const bccList = bcc ? bcc.split(/[,;]+/).map(e => e.trim()).filter(Boolean) : []
 
     // Build HTML body
-    const htmlBody = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">' +
+    const rawBody = '<div style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;">' +
       bodyText.replace(/\n/g, '<br/>') +
-      '<br/><br/><hr style="border:none;border-top:1px solid #eee;margin:20px 0;"/>' +
-      '<p style="font-size:12px;color:#888;">Sent via Gigva Kenya Platform</p>' +
       '</div>'
+
+    // Append centralized Gigva signature (duplicate-safe)
+    const htmlBody = appendSignature(rawBody)
 
     const fromEmail = 'Gigva Kenya <cto@gigva.co.ke>'
 
@@ -81,11 +82,9 @@ export async function POST(req) {
     if (attachments.length > 0) sendOptions.attachments = attachments
 
     const { data, error } = await resend.emails.send(sendOptions)
-
     if (error) {
       return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
     }
-
     return NextResponse.json({ ok: true, id: data && data.id })
   } catch (e) {
     return NextResponse.json({ ok: false, msg: e.message }, { status: 500 })
