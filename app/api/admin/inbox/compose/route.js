@@ -68,7 +68,11 @@ export async function POST(req) {
     // Append centralized Gigva signature (duplicate-safe)
     const htmlBody = appendSignature(rawBody)
 
-    const fromEmail = 'Gigva Kenya <cto@gigva.co.ke>'
+    // Build sender from authenticated user's own email (not hardcoded cto address)
+  // user.email is a @gigva.co.ke address from the JWT — Resend allows any sender on the verified domain
+  const senderName = user.name || 'Gigva Staff'
+  const senderEmail = user.email || 'hello@gigva.co.ke'
+  const fromEmail = senderName + ' <' + senderEmail + '>'
 
     const sendOptions = {
       from: fromEmail,
