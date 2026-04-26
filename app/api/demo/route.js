@@ -1,10 +1,10 @@
-import { NextResponse }                          from 'next/server'
-import { db }                                     from '@/lib/db'
-import { randomId }                               from '@/lib/utils'
-import { sendEmail, sendEmailToMany }             from '@/lib/email'
-import { demoBookedStaff, demoBookedAutoReply }   from '@/lib/emailTemplates'
-import { getNotifyRecipients }                    from '@/lib/roleConfig'
-import { rateLimit }                               from '@/lib/rateLimit'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { randomId } from '@/lib/utils'
+import { sendEmail, sendEmailToMany } from '@/lib/email'
+import { demoBookedStaff, demoBookedAutoReply } from '@/lib/emailTemplates'
+import { getNotifyRecipients } from '@/lib/roleConfig'
+import { rateLimit } from '@/lib/rateLimit'
 
 export async function POST(req) {
   try {
@@ -15,9 +15,8 @@ export async function POST(req) {
 
     const body = await req.json()
     const {
-      name, email, company = '', phone = '',
-      message = '', interests = [], businessType = '',
-      source = 'demo',
+      name, email, company = '', phone = '', message = '',
+      interests = [], businessType = '', source = 'demo',
     } = body
 
     if (!name?.trim() || !email?.trim() || !company?.trim()) {
@@ -33,30 +32,86 @@ export async function POST(req) {
       )
     }
 
-    const id   = randomId()
+    const id = randomId()
     const data = {
-      name:         name.trim(),
-      email:        email.toLowerCase().trim(),
-      company:      company.trim(),
-      phone:        phone.trim(),
-      message:      message.trim(),
-      interests:    Array.isArray(interests) ? interests : [],
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      company: company.trim(),
+      phone: phone.trim(),
+      message: message.trim(),
+      interests: Array.isArray(interests) ? interests : [],
       businessType: businessType.trim(),
-      source:       ['demo', 'book-demo', 'trial', 'api'].includes(source) ? source : 'demo',
+      source: ['demo', 'book-demo', 'trial', 'api'].includes(source) ? source : 'demo',
     }
 
-    db().prepare(`
+    const database = db()
+
+    database.prepare(`
       INSERT INTO demos (id, name, email, company, phone, message, interests, business_type, source)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      id, data.name, data.email, data.company, data.phone,
-      data.message, JSON.stringify(data.interests), data.businessType, data.source
+      id, data.name, data.email, data.company, data.phone, data.message,
+      JSON.stringify(data.interests), data.businessType, data.source
     )
+
+    // Save to inbox_messages for hello@gigva.co.ke (customer experience team)
+    try {
+      database.exec(`CREATE TABLE IF NOT EXISTS inbox_messages (
+        id TEXT PRIMARY KEY,
+        from_name TEXT DEFAULT '',
+        from_email TEXT NOT NULL,
+        to_email TEXT NOT NULL,
+        subject TEXT DEFAULT '',
+        body_text TEXT DEFAULT '',
+        body_html TEXT DEFAULT '',
+        is_read INTEGER DEFAULT 0,
+        source TEXT DEFAULT '',
+        ref_id TEXT DEFAULT '',
+        created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+      )`)
+
+      const msgSubject = 'New Demo Booking: ' + data.name + ' (' + data.company + ')'
+      const bodyLines = [
+        'DEMO BOOKING RECEIVED',
+        '',
+        'Name: ' + data.name,
+        'Email: ' + data.email,
+        'Phone: ' + (data.phone || 'N/A'),
+        'Business: ' + data.company,
+        'Business Type: ' + (data.businessType || 'N/A'),
+        'Interests: ' + (data.interests.length ? data.interests.join(', ') : 'N/A'),
+        'Message: ' + (data.message || 'N/A'),
+        'Source: ' + data.source,
+      ]
+      const bodyText = bodyLines.join('\n')
+
+      const htmlLines = [
+        '<h2 style="color:#0f2d5c;font-family:Arial,sans-serif;">Demo Booking Received</h2>',
+        '<table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse;width:100%;max-width:600px;">',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;width:140px;">Name</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">' + data.name + '</td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">Email</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;"><a href="mailto:' + data.email + '">' + data.email + '</a></td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">Phone</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">' + (data.phone || 'N/A') + '</td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">Business</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">' + data.company + '</td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">Business Type</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">' + (data.businessType || 'N/A') + '</td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">Interests</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">' + (data.interests.length ? data.interests.join(', ') : 'N/A') + '</td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;vertical-align:top;">Message</td><td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">' + (data.message || 'N/A') + '</td></tr>',
+        '<tr><td style="padding:8px 12px;background:#f1f5f9;font-weight:bold;">Source</td><td style="padding:8px 12px;">' + data.source + '</td></tr>',
+        '</table>',
+      ]
+      const bodyHtml = htmlLines.join('')
+
+      const msgId = randomId()
+      database.prepare(`INSERT OR IGNORE INTO inbox_messages
+        (id, from_name, from_email, to_email, subject, body_text, body_html, is_read, source, ref_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'demo', ?)
+      `).run(msgId, data.name, data.email, 'hello@gigva.co.ke', msgSubject, bodyText, bodyHtml, id)
+    } catch (inboxErr) {
+      console.warn('[demo] inbox_messages insert failed:', inboxErr.message)
+    }
 
     // Fire-and-forget notifications
     sendEmailToMany(getNotifyRecipients('demo'), demoBookedStaff(data))
       .catch(e => console.error('[demo/notify]', e.message))
-
     sendEmail({ to: data.email, ...demoBookedAutoReply(data) })
       .catch(e => console.error('[demo/autoreply]', e.message))
 
