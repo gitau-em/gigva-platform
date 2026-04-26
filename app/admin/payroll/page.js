@@ -119,14 +119,14 @@ function PayslipDocument({ slip, emp }) {
   const sickBalance       = slip.sick_leave_balance !== undefined ? slip.sick_leave_balance : (sickEntitlement - sickTaken)
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', width: '794px', minHeight: '1123px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #d1d5db', boxSizing: 'border-box', padding: '0' }}>
+    <div style={{ fontFamily: 'Arial, sans-serif', width: '794px', minHeight: '1123px', margin: '0 auto', backgroundColor: '#fff', border: '1px solid #d1d5db', boxSizing: 'border-box', padding: '0', display: 'flex', flexDirection: 'column' }}>
 
       {/* HEADER */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '16px 20px 12px', borderBottom: '2px solid #e5e7eb' }}>
         {/* Left: Business address */}
         <div style={{ fontSize: '11px', color: '#374151', lineHeight: '1.7' }}>
           <div style={{ fontWeight: 'bold', fontSize: '12px' }}>Westlands Business Park, Nairobi</div>
-          <div>P.O Box 00100, Kenya</div>
+          <div>P.O box 13878-00100 Nairobi</div>
           <div>+254 701 443 444</div>
           <div>hello@gigva.co.ke</div>
           <div>www.gigva.co.ke</div>
