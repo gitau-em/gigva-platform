@@ -51,7 +51,7 @@ const TEAM = [
     name: 'Edward Gitau',
     role: 'Lead Engineer',
     since: 'With Gigva since 2016',
-    bio: 'Leads all engineering on the Gigva platform — architecture, reliability, and new feature delivery. The technical backbone behind every release.',
+    bio: 'Leads all engineering on the Gigva platform: architecture, reliability, and new feature delivery. The technical backbone behind every release.',
     photo: '/team/edward-gitau.webp',
   },
   {
