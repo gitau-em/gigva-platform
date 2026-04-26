@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 import { Resend } from 'resend'
 import { appendSignature } from '@/lib/emailSignature'
+import { db } from '@/lib/db'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -88,6 +89,27 @@ export async function POST(req) {
     const { data, error } = await resend.emails.send(sendOptions)
     if (error) {
       return NextResponse.json({ ok: false, msg: error.message }, { status: 500 })
+    }
+    // Save sent email to DB so it appears in Sent tab
+    try {
+      const database = db()
+      // Ensure sent_emails table exists
+      database.exec(`CREATE TABLE IF NOT EXISTS sent_emails (
+        id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(8)))),
+        from_email TEXT NOT NULL,
+        to_email TEXT NOT NULL,
+        subject TEXT NOT NULL DEFAULT '',
+        body_text TEXT NOT NULL DEFAULT '',
+        body_html TEXT NOT NULL DEFAULT '',
+        resend_id TEXT NOT NULL DEFAULT '',
+        sent_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`)
+      const sentId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+      database.prepare(
+        'INSERT INTO sent_emails (id, from_email, to_email, subject, body_text, body_html, resend_id, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'))'
+      ).run(sentId, senderEmail, toList.join(', '), subject, bodyText || '', htmlBody, data?.id || '')
+    } catch (dbErr) {
+      console.warn('[inbox/compose] sent_emails insert failed:', dbErr.message)
     }
     return NextResponse.json({ ok: true, id: data && data.id })
   } catch (e) {
