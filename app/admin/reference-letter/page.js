@@ -105,23 +105,24 @@ export default function ReferenceLetterPage() {
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
     body { margin: 0; padding: 0; font-family: 'Times New Roman', Georgia, serif; font-size: 11pt; color: #111; }
     @media print {
-          @page { size: A4 portrait; margin: 12mm 14mm 14mm 14mm; }
+          @page { size: A4 portrait; margin: 14mm 16mm 14mm 16mm; }
           * { visibility: hidden !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           #gigva-letter-print, #gigva-letter-print * { visibility: visible !important; }
           #gigva-letter-print {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 182mm !important;
+            position: static !important;
+            width: 100% !important;
             min-height: auto !important;
+            height: auto !important;
             max-height: none !important;
             overflow: visible !important;
             box-shadow: none !important;
             border-radius: 0 !important;
-            padding: 12mm 14mm 14mm 14mm !important;
+            padding: 0 !important;
             margin: 0 !important;
             background: white !important;
           }
+          #gigva-letter-print .letter-footer { page-break-inside: avoid !important; }
+          #gigva-letter-print .letter-sig-stamp { page-break-inside: avoid !important; }
           img { max-width: 100% !important; height: auto !important; }
         }
   `
@@ -364,7 +365,7 @@ export default function ReferenceLetterPage() {
                 </div>
               )}
 
-              <div style={{ position:'relative', zIndex:1, height:'100%', display:'flex', flexDirection:'column', minHeight:'1010px' }}>
+              <div style={{ position:'relative', zIndex:1, height:'100%', display:'flex', flexDirection:'column', minHeight:'auto' }}>
 
                 {/* ===== LETTERHEAD ===== */}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'0', paddingBottom:'12px', borderBottom:'3px solid #1a56db' }}>
@@ -446,7 +447,7 @@ export default function ReferenceLetterPage() {
                   <p style={{ marginBottom:'32px' }}>Yours sincerely,</p>
 
                   {/* Signature Block + Stamp Row */}
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                  <div className="letter-sig-stamp" style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
 
                     {/* LEFT: Signature */}
                     <div>
@@ -472,7 +473,7 @@ export default function ReferenceLetterPage() {
                 </div>
 
                 {/* ===== FOOTER ===== */}
-                <div style={{ marginTop:'32px', paddingTop:'10px', borderTop:'1px solid #e5e7eb', display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
+                <div className="letter-footer" style={{ marginTop:'32px', paddingTop:'10px', borderTop:'1px solid #e5e7eb', display:'flex', justifyContent:'space-between', alignItems:'flex-end' }}>
                   <div style={{ fontSize:'7.5pt', color:'#9ca3af', maxWidth:'460px', lineHeight:'1.5', fontFamily:"'DM Sans',sans-serif", fontStyle:'italic' }}>
                     {form.disclaimer}
                   </div>
