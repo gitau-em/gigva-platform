@@ -185,7 +185,7 @@
     @page { size: A4 portrait; margin: 12mm 14mm 14mm 14mm; }
     * { visibility: hidden !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     #gigva-letter-print, #gigva-letter-print * { visibility: visible !important; }
-    #gigva-letter-print { position: static !important; top: 0 !important; left: 0 !important; width: 182mm !important; overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; padding: 12mm 14mm 14mm 14mm !important; margin: 0 !important; background: white !important; }
+    #gigva-letter-print,#gigva-letter-print.print-sheet{position:static!important;width:100%!important;min-height:auto!important;height:auto!important;overflow:visible!important;box-shadow:none!important;border-radius:0!important;padding:0!important;margin:0!important;background:white!important}.print-sheet{min-height:auto!important;max-height:none!important}
     #gigva-letter-print .letter-footer {
     page-break-inside: avoid !important;
   }
