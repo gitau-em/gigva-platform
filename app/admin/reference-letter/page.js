@@ -1,4 +1,5 @@
 'use client'
+import CompanyLogo from '@/components/CompanyLogo'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -337,6 +338,10 @@ export default function ReferenceLetterPage() {
               )}
 
               <div style={{ position:'relative', zIndex:1 }}>
+                {/* Gigva Company Logo - from CompanyLogo component */}
+                <div style={{ marginBottom:'16px' }}>
+                  <CompanyLogo variant="document" />
+                </div>
                 {/* Letterhead */}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'18px' }}>
                   <div>
