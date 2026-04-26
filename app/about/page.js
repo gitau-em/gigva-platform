@@ -43,7 +43,7 @@ const TEAM = [
     name: 'Njeri Mwangi',
     role: 'Head of Product',
     since: 'With Gigva since 2017',
-    bio: 'Leads product strategy and roadmap. Works directly with customers across retail and logistics.',
+    bio: 'Drives the product vision by translating customer feedback into a focused, high-impact roadmap. She keeps the team aligned on what matters most — building tools that genuinely solve the problems Kenyan businesses face every day.',
     photo: '/team/njeri-mwangi.webp',
   },
   {
@@ -51,7 +51,7 @@ const TEAM = [
     name: 'Edward Gitau',
     role: 'Lead Engineer',
     since: 'With Gigva since 2016',
-    bio: 'Leads all engineering on the Gigva platform: architecture, reliability, and new feature delivery. The technical backbone behind every release.',
+    bio: 'Leads all engineering on the Gigva platform: architecture, reliability, and new feature delivery. He sets clear technical standards and mentors the engineering team to ship with confidence and precision.',
     photo: '/team/edward-gitau.webp',
   },
   {
@@ -59,7 +59,7 @@ const TEAM = [
     name: 'Daniel Njoroge',
     role: 'Operations Lead',
     since: 'With Gigva since 2020',
-    bio: 'Oversees the day-to-day operational processes that support platform delivery.',
+    bio: 'Ensures the operational processes behind platform delivery run smoothly and efficiently. He equips his team with the structure and clarity they need to execute consistently across every business function.',
     photo: '/team/daniel-njoroge.jpg',
   },
   {
@@ -67,18 +67,18 @@ const TEAM = [
     name: 'James Odhiambo',
     role: 'Finance & Compliance Lead',
     since: 'With Gigva since 2016',
-    bio: 'Manages financial operations and ensures compliance with the Kenya Data Protection Act 2019.',
+    bio: 'Leads financial operations and ensures the business meets all regulatory obligations under the Kenya Data Protection Act 2019. He gives his team the frameworks and oversight they need to keep Gigva financially sound and fully compliant.',
     photo: '/team/james-odhiambo.jpg',
   },
   {
     initials: 'FK',
     name: 'Fatuma Kamau',
-    role: 'People & Operations Lead',
+    role: 'People & Culture Lead',
     since: 'With Gigva since 2018',
-    bio: 'Responsible for people management, hiring, and internal processes.',
+    bio: 'Leads hiring, onboarding, and the internal culture that keeps the Gigva team performing at its best. She creates the environment where people grow in their roles and stay committed to the company's mission.',
     photo: '/team/fatuma-kamau.webp',
   },
-]
+]]
 
 function MemberCard({ person, size = 'md' }) {
   const isLg = size === 'lg'
@@ -264,12 +264,11 @@ export default function AboutPage() {
       <section className="section bg-slate-50 border-t border-slate-200">
         <div className="inner">
           <div className="mb-10">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Team</p>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">The team behind the platform</h2>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Team Leads</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">The leads behind every function</h2>
             <div className="bg-sky-50 border border-sky-100 rounded-xl px-5 py-4 max-w-2xl">
               <p className="text-sm text-slate-700 leading-relaxed">
-                Our platform is built and maintained by a dedicated team of 20 focused
-                on payment systems, data accuracy, and reliability.
+                Meet the leads who drive Gigva forward — each responsible for a core function of the business and the team behind it.
               </p>
             </div>
           </div>
