@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { verifyToken } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
+import { appendSignature } from '@/lib/emailSignature'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -439,13 +440,8 @@ export async function POST(req) {
     // Build email body
     const emailBody = buildEmailBodyHtml(slip, employee, monthName, filename)
 
-    // Optional signature
-    let signatureHtml = ''
-    try {
-      const sigRow = db().prepare("SELECT html FROM email_signatures WHERE id = 'universal' LIMIT 1").get()
-      if (sigRow?.html) signatureHtml = '<br><hr style="border:none;border-top:1px solid #e2e8f0;margin:16px 0">' + sigRow.html
-    } catch(e) {}
-    const fullBody = emailBody + signatureHtml
+      // Append centralized Gigva signature (duplicate-safe)
+  const fullBody = appendSignature(emailBody)
 
     // Send via Resend
     const { data, error } = await resend.emails.send({
