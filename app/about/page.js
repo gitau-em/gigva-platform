@@ -51,7 +51,7 @@ const TEAM = [
     name: 'Edward Gitau',
     role: 'Lead Engineer',
     since: 'With Gigva since 2016',
-    bio: 'Joined Gigva in 2016 as an IT Support Technician and progressed through the ranks to Senior Software Engineer before being appointed Lead Engineer in 2021. His journey reflects strong technical growth and a deep understanding of the company\'s systems and product development, contributing significantly to the development, reliability, and evolution of the platform.',
+    bio: 'Leads all engineering on the Gigva platform — architecture, reliability, and new feature delivery. The technical backbone behind every release.',
     photo: '/team/edward-gitau.webp',
   },
   {
