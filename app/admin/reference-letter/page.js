@@ -29,7 +29,7 @@ const defaultForm = {
   employmentType: 'Full-Time', employeeId: '',
   relationship: '', bodyText: '', recommendation: 'Highly Recommended', closingText: '',
   includeVerification: false,
-  disclaimer: 'This reference letter is confidential and intended solely for the named addressee. The information is based on the author's professional assessment and experience working with the individual.',
+  disclaimer: 'This reference letter is confidential and intended solely for the named addressee. The information is based on the author\'s professional assessment and experience working with the individual.',
   pageNumber: true,
 }
 
