@@ -165,22 +165,20 @@ async function buildPayslipPdf(slip, emp) {
     })
   })
 
-  // Bold horizontal divider line under header
-  const dividerY = topY(headerTop + headerTotalH)
+  // Single clean divider line placed BELOW the entire header block
+  // Company details: 6 lines, last at topY(headerTop+18+5*11)=topY(headerTop+73)
+  // 16pt clear gap below last text line before drawing divider
+  const headerBottomOffset = 18 + 5 * 11 + 16  // 89pt below headerTop
+  const dividerY = topY(headerTop + headerBottomOffset)
   page.drawLine({
     start: { x: margin, y: dividerY },
     end: { x: margin + contentW, y: dividerY },
-    thickness: 1.5, color: rgb(0.08, 0.30, 0.65)
-  })
-  // Thin second line for double-rule effect
-  page.drawLine({
-    start: { x: margin, y: dividerY - 3 },
-    end: { x: margin + contentW, y: dividerY - 3 },
-    thickness: 0.5, color: rgb(0.08, 0.30, 0.65)
+    thickness: 0.8,
+    color: rgb(0.78, 0.82, 0.88)
   })
 
   // -- SALARY SLIP TITLE BAR --
-  const titleTop = headerTop + headerTotalH + 8
+  const titleTop = headerTop + headerBottomOffset + 8
   drawRect(page, margin, topY(titleTop + 18), contentW, 18, '#0f2d5c')
   const titleText = 'SALARY SLIP  |  ' + emp.name + '  |  ' + monthName.toUpperCase() + ' ' + slip.period_year
   const titleW = helveticaBold.widthOfTextAtSize(titleText, 9)
