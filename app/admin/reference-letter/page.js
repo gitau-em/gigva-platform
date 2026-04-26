@@ -104,7 +104,26 @@ export default function ReferenceLetterPage() {
   const printStyles = `
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap');
     body { margin: 0; padding: 0; font-family: 'Times New Roman', Georgia, serif; font-size: 11pt; color: #111; }
-    @media print { @page { size: A4 portrait; margin: 15mm 18mm 20mm 18mm; } body { padding: 0; } }
+    @media print {
+          @page { size: A4 portrait; margin: 12mm 14mm 14mm 14mm; }
+          * { visibility: hidden !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          #gigva-letter-print, #gigva-letter-print * { visibility: visible !important; }
+          #gigva-letter-print {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 182mm !important;
+            min-height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 12mm 14mm 14mm 14mm !important;
+            margin: 0 !important;
+            background: white !important;
+          }
+          img { max-width: 100% !important; height: auto !important; }
+        }
   `
 
     const handlePrint = () => {
@@ -144,7 +163,7 @@ export default function ReferenceLetterPage() {
   )
 
   return (
-    <div style={{ fontFamily:"'DM Sans', system-ui, sans-serif", minHeight:'100vh', background:'#0b1120', color:'#e2e8f0', display:'flex', flexDirection:'column' }}>
+    <div id="ref-letter-page" style={{ fontFamily:"'DM Sans', system-ui, sans-serif", minHeight:'100vh', background:'#0b1120', color:'#e2e8f0', display:'flex', flexDirection:'column' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -316,7 +335,7 @@ export default function ReferenceLetterPage() {
             </div>
 
             {/* A4 Sheet — 210mm x 297mm at 96dpi = 794px x 1123px */}
-            <div ref={previewRef} className="print-sheet" style={{
+            <div ref={previewRef} id="gigva-letter-print" className="print-sheet" style={{
               background:'white',
               boxShadow:'0 25px 80px rgba(0,0,0,0.7)',
               borderRadius:'3px',
