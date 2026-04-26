@@ -19,10 +19,10 @@ const today = new Date().toISOString().split('T')[0]
 
 const COMPANY_INFO = {
   name: 'Gigva Kenya Ltd',
-  poBox: 'P.O. Box 12345-00100',
+  poBox: 'P.O. Box 13878-00100',
   location: 'Westlands, Nairobi, Kenya',
   phone: '+254 701 443 444',
-  email: 'info@gigva.co.ke',
+  email: 'hello@gigva.co.ke',
   website: 'www.gigva.co.ke',
 }
 
@@ -107,20 +107,12 @@ export default function ReferenceLetterPage() {
     @media print { @page { size: A4 portrait; margin: 15mm 18mm 20mm 18mm; } body { padding: 0; } }
   `
 
-  const handlePrint = () => {
-    const printContent = previewRef.current?.innerHTML
-    const win = window.open('', '_blank')
-    win.document.write(`<html><head><title>Reference Letter - ${form.refNumber}</title><style>${printStyles}</style></head><body>${printContent}</body></html>`)
-    win.document.close()
-    win.focus()
-    setTimeout(() => { win.print(); win.close() }, 500)
+    const handlePrint = () => {
+    window.print()
   }
 
-  const handleDownloadPDF = () => {
-    const printContent = previewRef.current?.innerHTML
-    const win = window.open('', '_blank')
-    win.document.write(`<html><head><title>Reference Letter - ${form.refNumber}</title><style>${printStyles}</style><script>window.onload=function(){window.print();setTimeout(()=>window.close(),1000);}<\/script></head><body>${printContent}</body></html>`)
-    win.document.close()
+    const handleDownloadPDF = () => {
+    window.print()
   }
 
   const bodyParagraph1 = () => {
@@ -176,6 +168,15 @@ export default function ReferenceLetterPage() {
         input[type=radio], input[type=checkbox] { accent-color:#3b82f6; width:14px; height:14px; cursor:pointer; }
         @media print {
           .no-print { display: none !important; }
+          body { margin: 0 !important; padding: 0 !important; }
+          @page { size: A4 portrait; margin: 10mm 12mm 15mm 12mm; }
+          .print-sheet {
+            width: 210mm !important;
+            min-height: 297mm !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 15mm 18mm 20mm 18mm !important;
+          }
         }
       `}</style>
 
@@ -315,7 +316,7 @@ export default function ReferenceLetterPage() {
             </div>
 
             {/* A4 Sheet — 210mm x 297mm at 96dpi = 794px x 1123px */}
-            <div ref={previewRef} style={{
+            <div ref={previewRef} className="print-sheet" style={{
               background:'white',
               boxShadow:'0 25px 80px rgba(0,0,0,0.7)',
               borderRadius:'3px',
@@ -351,7 +352,12 @@ export default function ReferenceLetterPage() {
 
                   {/* LEFT: Logo */}
                   <div style={{ display:'flex', flexDirection:'column', gap:'4px' }}>
-                    <CompanyLogo variant="document" />
+                    <img
+                    src="/assets/gigva-logo.svg"
+                    alt="Gigva Kenya"
+                    style={{ width: '200px', height: 'auto', display: 'block' }}
+                    onError={e => { e.currentTarget.src = '/gigva-logo.png'; }}
+                  />
                     {form.department && (
                       <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:'8pt', color:'#6b7280', letterSpacing:'0.06em', textTransform:'uppercase', marginTop:'4px', paddingLeft:'2px' }}>
                         {form.department}
@@ -429,9 +435,6 @@ export default function ReferenceLetterPage() {
                       <div style={{ fontFamily:"'Playfair Display',serif", fontWeight:'700', fontSize:'13pt', color:'#0f2d5c' }}>{CTO_INFO.name}</div>
                       <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:'9.5pt', color:'#1a56db', fontWeight:'600', marginTop:'2px' }}>{CTO_INFO.title}</div>
                       <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:'9pt', color:'#4b5563', marginTop:'1px' }}>{COMPANY_INFO.name}</div>
-                      <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:'9pt', color:'#6b7280', marginTop:'4px' }}>
-                        <span>T: {CTO_INFO.phone}</span>
-                      </div>
                       <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:'9pt', color:'#6b7280' }}>
                         <span>E: {CTO_INFO.email}</span>
                       </div>
